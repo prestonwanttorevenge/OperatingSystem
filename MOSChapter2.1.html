@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 2.1</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-64 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Chương 2.1: Tiến Trình</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Mô hình & Vòng đời" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">1. Mô hình & Vòng đời</a>
+                    <a href="#section-Khởi tạo & Tắt" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">2. Khởi tạo & Tắt tiến trình</a>
+                    <a href="#section-Bảng tiến trình & PCB" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">3. Bảng tiến trình & PCB</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Tiến độ:</strong> 30 câu hỏi.<br>Hệ thống tự động chấm điểm và giải thích theo chuẩn CLRS.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-2">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 2: PROCESSES & THREADS (PHẦN 1)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Phân tích sâu 30 câu: Vòng đời, Khởi tạo, Tắt và PCB của Tiến trình.</p>
+                </div>
+                <div id="questions-list" class="space-y-12 mt-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== MÔ HÌNH & VÒNG ĐỜI (1-10) ==================
+            { category: "Mô hình & Vòng đời", q: "Theo giáo sư Tanenbaum, sự khác biệt giữa 'Chương trình' (Program) và 'Tiến trình' (Process) được ví von như thế nào?", options: ["Chương trình là con dao, tiến trình là miếng thịt.", "Chương trình là công thức nấu ăn, tiến trình là toàn bộ hoạt động của đầu bếp đang nhào bột và nướng bánh theo công thức đó.", "Chương trình là phần cứng, tiến trình là phần mềm.", "Chương trình nằm trên RAM, tiến trình nằm trên đĩa."], correct: 1, explanation: "Chương trình chỉ là một tập tin tĩnh (như tờ công thức). Tiến trình là một thực thể động (activity). Nó bao gồm chương trình, dữ liệu, trạng thái CPU, và một 'đầu bếp' (luồng thực thi) đang làm việc cật lực để hoàn thành 'món ăn' đó.", citation: "Chương 2.1.1: The Process Model." },
+            { category: "Mô hình & Vòng đời", q: "Đa chương trình (Multiprogramming) thực chất là gì dưới góc nhìn của CPU?", options: ["Sử dụng nhiều CPU vật lý cùng lúc.", "Pseudo-parallelism (Song song giả tạo) - CPU chuyển đổi qua lại giữa các tiến trình cực nhanh, tạo ảo giác nhiều chương trình đang chạy cùng lúc.", "Ép xung CPU để chạy nhanh gấp đôi.", "Gộp nhiều chương trình thành một file duy nhất."], correct: 1, explanation: "Dù có 1 CPU, HĐH vẫn cho phép chạy vừa nghe nhạc vừa lướt web. Thực chất CPU chạy web 50ms, rồi ngắt, chạy nhạc 50ms. Sự chuyển đổi nhanh đến mức con người tưởng chúng chạy song song thực sự (Pseudo-parallelism).", citation: "Chương 2.1.1: The Process Model." },
+            { category: "Mô hình & Vòng đời", q: "Một tiến trình có 3 trạng thái cơ bản. Đó là những trạng thái nào?", options: ["Start, Run, Stop.", "Running (Đang chạy), Ready (Sẵn sàng), Blocked (Bị chặn).", "New, Old, Deleted.", "Foreground, Background, Sleeping."], correct: 1, explanation: "Running: Đang chiếm CPU. Ready: Có thể chạy ngay nhưng phải đứng xếp hàng chờ HĐH cấp CPU. Blocked: Bị kẹt, không thể chạy được dù HĐH có cấp CPU đi nữa (thường do đang chờ dữ liệu từ bàn phím hoặc đĩa cứng).", citation: "Chương 2.1.2: Process States." },
+            { category: "Mô hình & Vòng đời", q: "Điều gì gây ra sự chuyển đổi trạng thái từ Running (Đang chạy) sang Blocked (Bị chặn)?", options: ["HĐH tước quyền CPU của tiến trình vì nó đã dùng hết thời gian cho phép.", "Tiến trình chạy xong và kết thúc.", "Tiến trình tự gọi một System Call yêu cầu I/O (ví dụ: read file) và phải dừng lại chờ dữ liệu.", "Tiến trình bị lỗi chia cho 0."], correct: 2, explanation: "Sự chuyển đổi Running -> Blocked là TỰ NGUYỆN hoặc BẮT BUỘC DO THIẾU DỮ LIỆU. Tiến trình nhận ra nó không thể chạy tiếp nếu chưa có dữ liệu từ ổ đĩa cứng, nó báo HĐH: 'Tôi chờ I/O đây, anh lấy CPU cho người khác dùng đi'.", citation: "Chương 2.1.2: Process States." },
+            { category: "Mô hình & Vòng đời", q: "Điều gì gây ra sự chuyển đổi trạng thái từ Running (Đang chạy) sang Ready (Sẵn sàng)?", options: ["Tiến trình cần đọc file.", "Bộ định thời (Scheduler) của HĐH quyết định rằng tiến trình này đã chạy đủ lâu, phải ngắt nó để nhường CPU cho tiến trình khác xếp hàng.", "Tiến trình gọi lệnh exit().", "Người dùng tắt màn hình."], correct: 1, explanation: "Sự chuyển đổi này hoàn toàn BỊ ĐỘNG. Tiến trình vẫn muốn chạy, không thiếu dữ liệu gì cả, nhưng HĐH (Scheduler) nói 'Hết giờ (quantum) rồi, ra sau xếp hàng lại đi!'.", citation: "Chương 2.1.2: Process States." },
+            { category: "Mô hình & Vòng đời", q: "Một tiến trình có thể chuyển TRỰC TIẾP từ trạng thái Blocked (Bị chặn) sang Running (Đang chạy) được không?", options: ["Hoàn toàn được, nếu nó là tiến trình ưu tiên cao.", "Không bao giờ. Khi có dữ liệu, nó phải chuyển sang Ready trước để xếp hàng đợi Bộ định thời (Scheduler) gọi tên.", "Được, nếu nó là tiến trình của HĐH.", "Được, nếu người dùng click chuột vào nó."], correct: 1, explanation: "Nhìn vào sơ đồ trạng thái (Figure 2-2): Không có mũi tên nào nối từ Blocked thẳng lên Running. Khi ổ đĩa báo ngắt 'Dữ liệu đã có', tiến trình được rã đông, nhưng nó chỉ được đưa vào hàng đợi Ready. Nó phải chờ Scheduler cấp CPU mới được Running.", citation: "Chương 2.1.2: Process States, Hình 2-2." },
+            { category: "Mô hình & Vòng đời", q: "Trong mô hình tiến trình, khi xảy ra ngắt phần cứng (Interrupt), tầng nào của Hệ điều hành sẽ là nơi ĐẦU TIÊN xử lý ngắt và cứu vãn trạng thái CPU?", options: ["Bộ định thời (Scheduler).", "Chương trình ứng dụng.", "Tầng thấp nhất của HĐH chứa các thói quen xử lý ngắt (Interrupt Handler), thường viết bằng Assembly.", "Giao diện đồ họa (GUI)."], correct: 2, explanation: "Dưới cùng của OS là các đoạn code Assembly chuyên trị ngắt. Khi có ngắt, phần cứng đẩy thanh ghi PC vào stack. Đoạn Assembly này lập tức lưu toàn bộ thanh ghi còn lại vào Bảng tiến trình, sau đó mới gọi code C của Kernel để xử lý.", citation: "Chương 2.1.2: Process States (Hình 2-3)." },
+            { category: "Mô hình & Vòng đời", q: "Chuyển đổi từ Ready (Sẵn sàng) sang Running (Đang chạy) do thành phần nào quyết định?", options: ["Do người dùng bấm bàn phím.", "Do thiết bị I/O tự quyết định.", "Do Bộ định thời (Process Scheduler) của Hệ điều hành.", "Do trình biên dịch C++."], correct: 2, explanation: "Process Scheduler là 'Thẩm phán' của HĐH. Nó nhìn vào hàng đợi Ready, dùng các thuật toán (như Round Robin, Priority) để chọn ra một anh may mắn nhất, nạp trạng thái của anh ta vào CPU và đổi anh ta sang Running.", citation: "Chương 2.1.2: Process States." },
+            { category: "Mô hình & Vòng đời", q: "Sự phân biệt giữa Tiến trình thiên về CPU (CPU-bound) và Tiến trình thiên về I/O (I/O-bound) ảnh hưởng thế nào đến vòng đời?", options: ["CPU-bound sẽ luôn ở trạng thái Blocked.", "I/O-bound rất hay chuyển sang trạng thái Blocked, trong khi CPU-bound thường bị ngắt bởi Scheduler và đẩy về Ready.", "CPU-bound tiêu tốn ít RAM hơn.", "Không có gì khác biệt."], correct: 1, explanation: "Tiến trình tính số Pi (CPU-bound) chả bao giờ gọi ổ đĩa, nên nó cứ chạy cho đến khi bị HĐH tước CPU (Run -> Ready). Tiến trình Word (I/O-bound) gõ 1 chữ, lưu 1 cái, gọi đĩa liên tục nên cứ tí lại ngủ (Run -> Blocked).", citation: "Chương 2.1.2: Vận dụng cơ chế State transitions." },
+            { category: "Mô hình & Vòng đời", q: "Theo mô hình của Tanenbaum, mỗi tiến trình đều có một con trỏ lệnh (Program Counter) ảo của riêng mình. Điều này đúng hay sai?", options: ["Sai, cả máy tính chỉ có 1 Program Counter duy nhất và các tiến trình dùng chung.", "Đúng, ở góc độ lô-gic, mỗi tiến trình tưởng nó có 1 PC riêng. Khi tiến trình thực sự chạy trên CPU, PC ảo của nó được nạp vào PC thật của phần cứng.", "Sai, tiến trình không dùng PC mà dùng RAM.", "Đúng, mỗi tiến trình mua 1 con chip PC riêng."], correct: 1, explanation: "Đây là khái niệm Trừu tượng hóa. Mỗi tiến trình có một trạng thái CPU riêng cất trong Process Table (chứa PC). Khi nó được chạy, OS nạp PC ảo này vào thanh ghi PC thật của CPU. Hết giờ, OS lại cất PC thật ra lại bảng.", citation: "Chương 2.1.1: The Process Model." },
+
+            // ================== KHỞI TẠO & TẮT (11-20) ==================
+            { category: "Khởi tạo & Tắt", q: "Có 4 sự kiện chính làm nảy sinh việc khởi tạo một tiến trình mới. Sự kiện nào sau đây KHÔNG thuộc 4 loại đó?", options: ["Hệ thống khởi động (System initialization).", "Một tiến trình đang chạy gọi System call để tạo tiến trình con.", "Người dùng yêu cầu mở một phần mềm.", "CPU tăng nhiệt độ vượt quá 90 độ C."], correct: 3, explanation: "Tiến trình sinh ra do: 1. Máy khởi động (tạo các tiến trình nền/daemons). 2. Người dùng click mở app. 3. Tiến trình này đẻ tiến trình kia. 4. Tạo lô công việc (trong Batch systems). Nhiệt độ CPU chỉ gây ra ngắt phần cứng, không đẻ tiến trình.", citation: "Chương 2.1.3: Process Creation." },
+            { category: "Khởi tạo & Tắt", q: "Trong hệ điều hành UNIX, System call DUY NHẤT để tạo ra một tiến trình mới là gì?", options: ["CreateProcess()", "clone()", "fork()", "spawn()"], correct: 2, explanation: "Triết lý UNIX rất dị: Chỉ có một cách duy nhất để sinh sản là `fork()`. Tiến trình cha gọi `fork()`, bùm, nó tách làm đôi thành 2 tiến trình giống hệt nhau (cha và con). Mọi tiến trình đều là con cháu của `init`.", citation: "Chương 2.1.3: Process Creation." },
+            { category: "Khởi tạo & Tắt", q: "Sau khi gọi `fork()`, tiến trình con trong UNIX có không gian địa chỉ như thế nào so với tiến trình cha?", options: ["Nó được cấp một vùng nhớ trống trơn.", "Nó chia sẻ 100% RAM với tiến trình cha, nếu cha đổi biến X thì con cũng thấy X đổi.", "Nó là một bản sao (clone) chính xác về nội dung của cha, nhưng nằm ở vùng nhớ ĐỘC LẬP. Nếu con đổi biến X, cha không bị ảnh hưởng.", "Nó bị xóa ngay lập tức."], correct: 2, explanation: "`fork()` copy toàn bộ không gian địa chỉ của cha sang cho con. Con có bộ nhớ riêng, nhưng giá trị bên trong y hệt lúc vừa tách ra. Từ giây phút đó, con và cha đường ai nấy đi, sửa biến không ảnh hưởng nhau.", citation: "Chương 2.1.3: Process Creation." },
+            { category: "Khởi tạo & Tắt", q: "Hệ điều hành Windows xử lý việc tạo tiến trình bằng System call `CreateProcess`. Khác biệt của nó với `fork()` là gì?", options: ["Nó chỉ hỗ trợ 16-bit.", "Nó không những tạo ra tiến trình mà còn nạp thẳng luôn chương trình thực thi (file .exe) vào không gian nhớ mới ngay từ lúc gọi, không cần copy từ cha.", "Nó gọi UNIX ở bên trong.", "Nó không cần nạp file .exe."], correct: 1, explanation: "Windows gộp chung việc tạo tiến trình và nạp code thành 1 lệnh `CreateProcess` duy nhất với 10 tham số dài loằng ngoằng. Không có khái niệm 'nhân bản y hệt cha' như ở UNIX.", citation: "Chương 2.1.3: Process Creation." },
+            { category: "Khởi tạo & Tắt", q: "Khi một tiến trình hoàn thành công việc một cách tự nguyện và sạch sẽ, nó kết thúc bằng cách nào?", options: ["Chờ người dùng rút điện.", "Gây ra lỗi chia cho 0 để tự sát.", "Gọi một System Call thông báo cho HĐH (`exit` ở UNIX, `ExitProcess` ở Windows).", "Tự tay xóa file của mình trên đĩa."], correct: 2, explanation: "Đây là Normal Exit (Tự nguyện). Chương trình chạy đến dòng code cuối cùng, thư viện C tự động gọi System call `exit()`. HĐH nhận được đơn xin nghỉ việc, sẽ tiến hành dọn dẹp RAM và Bảng tiến trình của nó.", citation: "Chương 2.1.4: Process Termination." },
+            { category: "Khởi tạo & Tắt", q: "Sự kiện tiến trình kết thúc do 'Fatal Error' (Involuntary - Bắt buộc) xảy ra khi nào?", options: ["Tiến trình gọi `exit(0)`.", "Người dùng click nút [X] trên cửa sổ.", "Tiến trình cố tình truy cập vào vùng nhớ không hợp lệ hoặc chia một số cho 0, phần cứng báo lỗi về OS và OS lập tức 'bắn bỏ' tiến trình.", "Tiến trình bị HĐH khác tấn công."], correct: 2, explanation: "Nếu tiến trình làm trò điên rồ (như dereference con trỏ NULL), CPU sẽ giăng bẫy (Trap). OS thức dậy, thấy hành vi phạm pháp bèn giết tiến trình đó ngay lập tức để bảo vệ hệ thống (Segmentation Fault).", citation: "Chương 2.1.4: Process Termination." },
+            { category: "Khởi tạo & Tắt", q: "Làm thế nào một tiến trình có thể giết chết một tiến trình khác?", options: ["Tiến trình gửi virus sang tiến trình kia.", "Tiến trình rút điện CPU.", "Tiến trình gọi System call `kill` (UNIX) hoặc `TerminateProcess` (Windows) để nhờ OS giết hộ, với điều kiện nó phải có đủ thẩm quyền (cùng UID hoặc là Root).", "Tiến trình tự đè bộ nhớ của mình lên tiến trình kia."], correct: 2, explanation: "Một tiến trình không thể tự thò tay bóp cổ tiến trình khác. Nó phải gửi trát cho HĐH (lệnh `kill` truyền một Signal). OS sẽ kiểm tra xem mày có phải là sếp của nó không. Nếu đúng, OS sẽ ra tay.", citation: "Chương 2.1.4: Process Termination." },
+            { category: "Khởi tạo & Tắt", q: "Hệ điều hành UNIX có cấu trúc phân cấp tiến trình rất rõ ràng (Cây tiến trình). Tiến trình gốc của mọi tiến trình trong UNIX tên là gì?", options: ["explorer.exe", "kernel32", "init (hoặc systemd)", "root"], correct: 2, explanation: "Khi Linux boot, hạt nhân tạo ra tiến trình số 1 tên là `init`. Mọi tiến trình khác (bash, sshd, chrome, firefox) đều là con, cháu, chắt của `init`. Cấu trúc cây này không bao giờ bị đứt gãy.", citation: "Chương 2.1.5: Process Hierarchies." },
+            { category: "Khởi tạo & Tắt", q: "Trong Windows, khái niệm 'Cây tiến trình' (Process Tree) có tồn tại mạnh mẽ như UNIX không?", options: ["Có, y hệt UNIX.", "Không, Windows không có khái niệm phân cấp tiến trình. Khi một tiến trình tạo ra con, nó được OS cấp một Thẻ bài (Handle). Nó có thể cho đi thẻ bài này, làm mất mối quan hệ cha-con.", "Windows không hỗ trợ tạo tiến trình con.", "Có, nhưng cây tiến trình của Windows mọc ngược."], correct: 1, explanation: "Khác biệt triết học! UNIX coi trọng gia phả cha-con (chết cả chùm). Windows coi mọi tiến trình sinh ra là bình đẳng. Cha nắm cái 'Handle' của con để điều khiển. Nếu cha ném Handle đó cho người khác, con trở thành con nuôi của người đó.", citation: "Chương 2.1.5: Process Hierarchies." },
+            { category: "Khởi tạo & Tắt", q: "Cơ chế 'Copy-On-Write' (COW) trong hệ thống UNIX hiện đại giúp tối ưu hóa lệnh `fork()` như thế nào?", options: ["Nó ngăn không cho tiến trình con sao chép mã nguồn.", "Thay vì copy toàn bộ RAM của cha sang con (rất chậm), HĐH cho cha và con dùng chung RAM. Chỉ khi nào một trong hai cố gắng SỬA (Write) dữ liệu, HĐH mới bí mật copy mảnh RAM đó ra thành bản riêng.", "Nó giúp copy ổ cứng nhanh hơn.", "Nó tự động mã hóa dữ liệu khi copy."], correct: 1, explanation: "Nếu cha có 1GB RAM, `fork()` mà copy 1GB thì mất vài giây, quá chậm. Với Copy-on-Write, con trỏ tới chung nhà với cha (Read-only). Khi con định ghi biến `x = 5`, OS chặn lại, copy cái trang chứa biến `x` ra riêng, lúc này con mới ghi vào bản mới. Tối ưu cực độ!", citation: "Chương 2.1.3: Process Creation (Advanced)." },
+
+            // ================== BẢNG QUẢN LÝ TIẾN TRÌNH & PCB (21-30) ==================
+            { category: "Bảng tiến trình & PCB", q: "Process Table (Bảng tiến trình) hay PCB (Process Control Block) là gì?", options: ["Là một file Excel lưu trên Desktop.", "Là cấu trúc dữ liệu khổng lồ do Hệ điều hành duy trì, trong đó mỗi phần tử (entry) lưu trữ MỌI thông tin cần thiết về MỘT tiến trình (Thanh ghi, trạng thái, bộ nhớ, file đang mở) để quản lý nó.", "Là bảng mạch điện tử chứa CPU.", "Là danh sách các địa chỉ web."], correct: 1, explanation: "PCB là 'hồ sơ lý lịch' của tiến trình. Khi tiến trình bị đẩy khỏi CPU, HĐH vơ vét toàn bộ PC, thanh ghi, stack pointer của CPU ném vào hồ sơ này cất đi. Lần sau đến lượt, lại lôi hồ sơ này ra đắp vào CPU.", citation: "Chương 2.1.6: Process States and Implementation." },
+            { category: "Bảng tiến trình & PCB", q: "Thông tin nào sau đây KHÔNG ĐƯỢC LƯU trong Process Control Block (PCB)?", options: ["Program Counter (Con trỏ lệnh).", "Stack Pointer (Con trỏ ngăn xếp).", "Mã nguồn gốc dạng text (C++, Java) của chương trình.", "Danh sách các file (File Descriptors) đang mở."], correct: 2, explanation: "Mã nguồn dạng text không tồn tại trong máy tính lúc chạy (nó đã bị biên dịch thành nhị phân). PCB chỉ chứa dữ liệu QUẢN LÝ (Registers, CPU time, trạng thái, quyền, files). Mã nhị phân (Code) nằm trong Address Space, không nằm trong PCB.", citation: "Chương 2.1.6: Process States." },
+            { category: "Bảng tiến trình & PCB", q: "Khi một Ngắt (Interrupt) như đĩa cứng báo xong việc xảy ra, ĐIỀU GÌ XẢY RA ĐẦU TIÊN ở cấp độ phần cứng?", options: ["Tiến trình tự tắt.", "HĐH xóa RAM.", "Phần cứng (CPU) tự động đẩy Program Counter (PC) và Program Status Word (PSW) hiện tại vào Ngăn xếp (Stack) và nhảy đến vector ngắt.", "Máy tính kêu tiếng bíp."], correct: 2, explanation: "Cực kỳ quan trọng: Phần cứng phải ra tay trước HĐH. Nó phải lưu lại 'di chúc' ngay lập tức (PC và PSW) vào stack để tí nữa còn biết đường quay lại. Sau đó nó mới gọi HĐH (Interrupt vector) vào dọn dẹp tiếp.", citation: "Chương 2.1.6: Implementation of Processes." },
+            { category: "Bảng tiến trình & PCB", q: "Thuật ngữ 'Context Switch' (Chuyển đổi ngữ cảnh) nghĩa là gì?", options: ["Đổi ngôn ngữ máy tính sang tiếng Việt.", "Thay đổi màn hình từ đen sang trắng.", "Quá trình HĐH lưu lại trạng thái (ngữ cảnh) của tiến trình cũ vào PCB của nó, và nạp trạng thái từ PCB của tiến trình mới vào các thanh ghi CPU để cho nó chạy.", "Chuyển từ ổ C sang ổ D."], correct: 2, explanation: "Context Switch là một thao tác rất đắt đỏ (tốn thời gian). OS phải lưu hàng chục thanh ghi, đổi bản đồ bộ nhớ (MMU/TLB), chọn tiến trình mới, nạp thanh ghi của tiến trình mới lên CPU. Quá trình này diễn ra hàng ngàn lần mỗi giây.", citation: "Chương 2.1.6: Process States." },
+            { category: "Bảng tiến trình & PCB", q: "Vector Ngắt (Interrupt Vector) chứa thông tin gì?", options: ["Chứa virus.", "Chứa danh sách các tiến trình bị lỗi.", "Chứa địa chỉ bộ nhớ (con trỏ hàm) của các chương trình phục vụ ngắt (Interrupt Service Routines). Khi ngắt N xảy ra, CPU nhìn vào ô số N để biết nhảy đi đâu.", "Chứa số lượng CPU."], correct: 2, explanation: "Nó là một mảng nằm ở vùng nhớ thấp. Ổ đĩa có ngắt số 4. Khi ổ đĩa kêu, CPU lấy số 4, vào mảng Vector ngắt xem ô số 4 chứa địa chỉ nào, thì CPU sẽ JUMP thẳng đến địa chỉ đó để chạy code xử lý ổ đĩa.", citation: "Chương 2.1.6: Implementation of Processes." },
+            { category: "Bảng tiến trình & PCB", q: "Trong mô hình đa chương trình, xét xác suất một tiến trình phải chờ I/O là $p$. Nếu có $n$ tiến trình nằm trong RAM, công thức xác suất CẢ $n$ TIẾN TRÌNH CÙNG CHỜ I/O (lúc này CPU rảnh rỗi) là bao nhiêu?", options: ["$p \times n$", "$1 - p^n$", "$p^n$", "$p / n$"], correct: 2, explanation: "Nếu xác suất 1 thằng đợi I/O là $p$, thì xác suất 2 thằng cùng đợi I/O là $p \times p = p^2$. Xác suất $n$ thằng cùng đợi I/O cùng một lúc là $p^n$. Đây là lúc duy nhất CPU bị lãng phí.", citation: "Chương 2.1.7: Modeling Multiprogramming." },
+            { category: "Bảng tiến trình & PCB", q: "Từ công thức trên, Hiệu suất sử dụng CPU (CPU Utilization) được tính bằng công thức nào?", options: ["$1 - p^n$", "$p^n$", "$1 - p \times n$", "$\frac{n}{p}$"], correct: 0, explanation: "CPU chỉ rảnh (idle) khi CẢ $n$ tiến trình đều đi ngủ (chờ I/O). Xác suất tất cả cùng ngủ là $p^n$. Vậy xác suất có ÍT NHẤT 1 tiến trình còn thức để CPU làm việc (Hiệu suất CPU) phần bù của nó: $1 - p^n$.", citation: "Chương 2.1.7: Modeling Multiprogramming." },
+            { category: "Bảng tiến trình & PCB", q: "Giả sử một tiến trình dành 80% thời gian để chờ I/O ($p = 0.8$). Nếu nạp 3 tiến trình vào RAM ($n = 3$), hiệu suất sử dụng CPU là bao nhiêu?", options: ["20%", "48.8%", "100%", "80%"], correct: 1, explanation: "Áp dụng công thức: CPU Utilization = $1 - p^n = 1 - 0.8^3 = 1 - 0.512 = 0.488$ (Tức 48.8%). Nhờ Multiprogramming nạp 3 chương trình, CPU từ chỗ chỉ làm việc 20% đã tăng lên làm việc gần 49% thời gian.", citation: "Chương 2.1.7: Modeling Multiprogramming." },
+            { category: "Bảng tiến trình & PCB", q: "Ý nghĩa thực tiễn của mô hình $1 - p^n$ trong thiết kế hệ thống là gì?", options: ["Chứng minh rằng RAM to không có tác dụng gì.", "Giúp các kỹ sư tính toán xem cần phải mua bao nhiêu RAM (để tăng n) nhằm đạt được hiệu suất CPU mong muốn (ví dụ 90%) mà không bị lãng phí tiền.", "Để giảm tốc độ đĩa cứng.", "Chứng minh CPU luôn chạy 100%."], correct: 1, explanation: "Thêm RAM = tăng được $n$ (nạp được nhiều tiến trình hơn). Nhưng khi $n$ đã đủ lớn, $p^n$ tiến sát về 0, CPU đã đạt 99% thì có mua thêm 100GB RAM cũng không làm máy chạy nhanh hơn được nữa.", citation: "Chương 2.1.7: Modeling Multiprogramming." },
+            { category: "Bảng tiến trình & PCB", q: "Trong quy trình Context Switch, đoạn code nào thực thi việc 'cất các thanh ghi từ CPU vào bảng tiến trình'?", options: ["Đoạn code trong hàm `main()` của ứng dụng.", "Trình duyệt web.", "Đoạn mã Assembly (hợp ngữ) của nhân HĐH, vì ở ngôn ngữ cấp cao như C không có lệnh nào để thao tác trực tiếp và lưu trữ từng thanh ghi vật lý của CPU.", "Trình biên dịch C++."], correct: 2, explanation: "Khi xảy ra ngắt, CPU bẫy vào Kernel. Tại đây, chỉ có mã Assembly mới có quyền năng gọi các lệnh thô sơ như `PUSH EAX, PUSH EBX` để cất dọn CPU. Lưu xong xuôi, nó mới gọi hàm C của HĐH để tư duy tiếp.", citation: "Chương 2.1.6: Implementation of Processes." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+
+            quizData.forEach((qObj) => {
+                // Section Divider
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-zinc-900 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                // Question Block
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${questionCounter}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (CLRS Style):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        // Render MathJax if present in answer block before showing
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            // Initial MathJax Typeset for questions
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 2.2</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-64 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Chương 2.2: Luồng (Threads)</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Khái niệm & So sánh" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">1. Khái niệm & So sánh</a>
+                    <a href="#section-User vs Kernel Threads" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">2. User vs Kernel Threads</a>
+                    <a href="#section-Triển khai lai & Nâng cao" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1 transition-colors">3. Triển khai lai & Nâng cao</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Tiến độ:</strong> 30 câu hỏi.<br>Hệ thống tự động chấm điểm và giải thích theo chuẩn CLRS.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-2">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 2: PROCESSES & THREADS (PHẦN 2)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Phân tích sâu 30 câu: Luồng (Threads), Không gian User/Kernel, và Bài toán đồng bộ.</p>
+                </div>
+                <div id="questions-list" class="space-y-12 mt-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== KHÁI NIỆM & SO SÁNH (1-10) ==================
+            { category: "Khái niệm & So sánh", q: "Mô hình Tiến trình (Process) thực chất đang nhóm 2 khái niệm độc lập nào lại với nhau?", options: ["User mode và Kernel mode.", "Gom nhóm tài nguyên (Resource grouping) và Luồng thực thi (Thread of execution).", "RAM và Ổ đĩa.", "Mã nguồn và Dữ liệu."], correct: 1, explanation: "Một Process thực chất làm 2 việc: Thứ nhất, nó là một cái hộp chứa tài nguyên (RAM, file đang mở). Thứ hai, nó chứa một chuỗi các lệnh đang được thực thi trên CPU. Khi tách chức năng 'thực thi' ra thành nhiều luồng chạy trong cùng một cái hộp tài nguyên đó, ta có khái niệm Đa luồng (Multithreading).", citation: "Chương 2.2.1: Thread Usage." },
+            { category: "Khái niệm & So sánh", q: "Lý do CHÍNH đáng nhất để các kỹ sư phát minh ra 'Luồng' (Thread) thay vì chỉ dùng Tiến trình là gì?", options: ["Để hệ điều hành nhỏ gọn hơn.", "Để tiêu thụ ít điện năng hơn trên các thiết bị di động.", "Tiến trình tốn quá nhiều thời gian để tạo mới và chuyển đổi ngữ cảnh. Các luồng chia sẻ chung bộ nhớ nên tạo mới nhanh hơn 10-100 lần và dễ dàng chia sẻ dữ liệu với nhau.", "Để phần mềm không bị nhiễm virus."], correct: 2, explanation: "Nếu bạn tạo 2 Process, chúng hoàn toàn mù tịt về bộ nhớ của nhau và HĐH mất rất lâu để nhân bản RAM. Tạo 2 Thread trong 1 Process giống như thuê thêm 1 nhân viên vào làm chung trong 1 văn phòng. Chuyển đổi giữa các Thread cực kỳ nhanh (Lightweight Process).", citation: "Chương 2.2.1: Thread Usage." },
+            { category: "Khái niệm & So sánh", q: "Trong cùng MỘT tiến trình, tất cả các luồng sẽ CHIA SẺ CHUNG những tài nguyên nào sau đây?", options: ["Program Counter (Con trỏ lệnh).", "Stack (Ngăn xếp).", "Address space (Không gian địa chỉ), Global variables (Biến toàn cục), và Open files (Các file đang mở).", "CPU Registers (Các thanh ghi CPU)."], correct: 2, explanation: "Các luồng chung sống trong cùng một Không gian địa chỉ. Luồng 1 thay đổi biến toàn cục `X`, luồng 2 lập tức nhìn thấy `X` bị đổi. Chúng cũng dùng chung danh sách các file đang mở. Điều này làm cho việc giao tiếp giữa các luồng cực kỳ dễ dàng (nhưng cũng đầy rủi ro).", citation: "Chương 2.2.2: The Classical Thread Model (Hình 2-12)." },
+            { category: "Khái niệm & So sánh", q: "Mặc dù chia sẻ chung bộ nhớ, nhưng mỗi luồng BẮT BUỘC PHẢI CÓ RIÊNG những thứ gì để có thể hoạt động độc lập?", options: ["Biến toàn cục và ổ cứng.", "Program Counter (Con trỏ lệnh), Registers (Thanh ghi), và Stack (Ngăn xếp).", "Không gian địa chỉ riêng.", "File Descriptor riêng."], correct: 1, explanation: "Vì mỗi luồng có thể đang gọi các hàm (functions) khác nhau vào cùng một thời điểm, chúng cần có Program Counter riêng để biết luồng mình đang chạy đến dòng lệnh nào. Chúng cần Stack riêng để chứa các biến cục bộ (local variables) của hàm đó mà không bị trộn lẫn với luồng khác.", citation: "Chương 2.2.2: The Classical Thread Model (Hình 2-12)." },
+            { category: "Khái niệm & So sánh", q: "Trong ví dụ về trình soạn thảo văn bản (Word processor) của Tanenbaum, tại sao HĐH phải dùng 3 Luồng thay vì 3 Tiến trình độc lập?", options: ["Vì Microsoft Word không hỗ trợ tiến trình.", "Vì 3 công việc (Tương tác GUI, Định dạng nền, Tự động lưu) CẦN PHẢI đọc và ghi vào CÙNG MỘT vùng nhớ chứa nội dung văn bản. Nếu dùng tiến trình, chúng sẽ bị cô lập bộ nhớ.", "Vì dùng tiến trình sẽ làm cháy CPU.", "Vì HĐH chỉ cho phép mở 1 tiến trình Word."], correct: 1, explanation: "Nếu tiến trình Auto-save là một Process riêng, nó không thể nhìn thấy nội dung văn bản mà tiến trình GUI đang giữ trên RAM. Bằng cách dùng Thread, cả 3 luồng đều bơi chung trong 1 vùng nhớ Document, dễ dàng làm việc đồng thời.", citation: "Chương 2.2.1: Thread Usage (Word Processor example)." },
+            { category: "Khái niệm & So sánh", q: "Trong ví dụ về Web Server, khi một luồng (Worker thread) bị Blocked do phải đọc file từ đĩa cứng, điều gì xảy ra với hệ thống đa luồng?", options: ["Toàn bộ Web server bị treo chờ đĩa cứng.", "Hệ điều hành sẽ tắt luôn luồng đó.", "Luồng Worker đó bị chặn, nhưng HĐH lập tức chuyển CPU sang cho luồng Worker khác tiếp tục xử lý các Client khác. Web server không hề bị treo.", "Web server báo lỗi 404."], correct: 2, explanation: "Đây là sức mạnh tuyệt đối của Multi-threading. Nếu Web server chỉ có 1 luồng, khi nó lấy file từ đĩa, nó đứng im 20ms, các request của user khác đến sẽ bị từ chối. Với nhiều luồng, một đứa chờ I/O thì đứa khác vẫn được CPU chạy.", citation: "Chương 2.2.1: Thread Usage (Web Server example)." },
+            { category: "Khái niệm & So sánh", q: "Chạy đa luồng (Multi-threading) trên một máy tính chỉ có 1 nhân CPU (Single-core) có mang lại lợi ích gì về mặt thời gian không?", options: ["Không, nó còn làm chậm máy đi vì tốn công chuyển đổi (Context switch).", "Chỉ có lợi khi máy tính có nhiều CPU.", "CÓ. Nó mang lại lợi ích to lớn khi các luồng có thao tác I/O. Nó cho phép khoảng thời gian CPU rảnh rỗi (khi luồng 1 chờ đĩa) được lấp đầy bằng việc thực thi luồng 2.", "Có, vì nó nhân đôi số vòng quay CPU."], correct: 2, explanation: "Nếu các luồng CHỈ toàn tính toán (CPU-bound) thì chạy đa luồng trên 1 nhân sẽ chậm hơn vì tốn phí chuyển đổi. NHƯNG thực tế ứng dụng thường có đọc/ghi (I/O). Đa luồng cho phép quá trình tính toán và quá trình I/O chồng lấp (overlap) lên nhau, tăng tốc độ tổng thể.", citation: "Chương 2.2.1: Thread Usage." },
+            { category: "Khái niệm & So sánh", q: "Sự khác biệt khi một Tiến trình gọi `exit()` và một Luồng gọi hàm thoát là gì?", options: ["Không có khác biệt.", "Luồng thoát thì toàn bộ tiến trình chết theo. Tiến trình thoát thì các luồng vẫn sống.", "Nếu bất kỳ luồng nào gọi `exit()`, toàn bộ Tiến trình (chứa tất cả các luồng khác) sẽ bị HĐH tiêu diệt ngay lập tức.", "Tiến trình không thể tự thoát."], correct: 2, explanation: "Lệnh `exit()` là của Tiến trình. Nếu luồng số 1 gọi `exit()`, HĐH hiểu là cái 'nhà' này xin phá sản, nó giật sập cái nhà, kéo theo luồng 2, 3, 4 chết chung. Để một luồng tự thoát mà không ảnh hưởng người khác, nó phải gọi `pthread_exit()`.", citation: "Chương 2.2.2: The Classical Thread Model." },
+            { category: "Khái niệm & So sánh", q: "Chuẩn luồng POSIX (Pthreads) của IEEE định nghĩa hàm nào dùng để một luồng CHỜ luồng khác kết thúc vòng đời?", options: ["pthread_wait()", "pthread_join()", "pthread_yield()", "pthread_exit()"], correct: 1, explanation: "Tương tự như `wait()` của Tiến trình cha chờ tiến trình con. Ở cấp độ luồng, một luồng muốn đợi luồng cụ thể nào đó chạy xong (để lấy kết quả tính toán) thì sẽ gọi `pthread_join(thread_id)`.", citation: "Chương 2.2.3: POSIX Threads." },
+            { category: "Khái niệm & So sánh", q: "Trong Pthreads, hàm `pthread_yield()` được dùng để làm gì?", options: ["Buộc một luồng khác phải dừng lại.", "Thay đổi bộ nhớ của luồng.", "Tự nguyện từ bỏ CPU (nhường lại CPU) cho một luồng khác chạy.", "Tăng độ ưu tiên của luồng."], correct: 2, explanation: "Khác với Tiến trình bị HĐH tước CPU một cách phũ phàng, trong nội bộ các luồng (đặc biệt là User-level threads), một luồng có thể lịch sự gọi `yield()`: 'Tôi chạy tạm đủ rồi, anh cho bạn khác trong nhóm tôi chạy đi'.", citation: "Chương 2.2.3: POSIX Threads." },
+
+            // ================== USER VS KERNEL THREADS (11-20) ==================
+            { category: "User vs Kernel Threads", q: "Đặc điểm nhận diện lớn nhất của Luồng mức người dùng (User-Level Threads - ULT) là gì?", options: ["Chỉ dành cho người dùng cá nhân (không dành cho máy chủ).", "Toàn bộ việc tạo luồng, hủy luồng và định thời (chuyển đổi qua lại) được thực hiện bởi một Thư viện luồng trong không gian User. Nhân Hệ điều hành (Kernel) hoàn toàn KHÔNG BIẾT sự tồn tại của các luồng này.", "Nó luôn chạy nhanh hơn CPU.", "Được quản lý bởi phần cứng."], correct: 1, explanation: "Trong ULT, HĐH chỉ nhìn thấy một Tiến trình duy nhất. Bên trong Tiến trình đó, lập trình viên nhét một cái 'Thư viện luồng' (Thread library) tự làm nhiệm vụ băm nhỏ CPU ra chia cho các luồng ảo. Kernel mù tịt về chuyện này.", citation: "Chương 2.2.4: Implementing Threads in User Space." },
+            { category: "User vs Kernel Threads", q: "Ưu điểm LỚN NHẤT của Luồng mức người dùng (ULT) so với Luồng hạt nhân (KLT) là gì?", options: ["Bảo mật tuyệt đối khỏi virus.", "Tốc độ tạo luồng và chuyển đổi ngữ cảnh (Context switch) cực kỳ nhanh, vì không cần phải gọi Trap/System call để chuyển xuống Kernel mode.", "Sử dụng được mọi loại phần cứng.", "Không bao giờ bị lỗi."], correct: 1, explanation: "Vì HĐH không dính dáng vào, nên việc chuyển luồng chỉ là thay đổi thanh ghi bên trong RAM của tiến trình đó (do Thư viện luồng tự làm). Nó nhanh hơn hàng chục lần so với việc phải phát bẫy (TRAP) chui xuống Kernel.", citation: "Chương 2.2.4: Implementing Threads in User Space." },
+            { category: "User vs Kernel Threads", q: "Nhược điểm TRÍ MẠNG (Tồi tệ nhất) của Luồng mức người dùng (ULT) là gì?", options: ["Nó tốn quá nhiều RAM.", "Chỉ chạy được 1 luồng.", "Nếu một luồng gọi System call bị Block (ví dụ chờ nhập bàn phím), Kernel sẽ chặn TOÀN BỘ tiến trình đó. Tất cả các luồng khác dù đang Ready cũng bị chết đứng theo.", "Nó không có giao diện đồ họa."], correct: 2, explanation: "Vì Kernel không biết có nhiều luồng, nó chỉ thấy 'Anh Tiến trình A đang chờ I/O'. Thế là Kernel block luôn Tiến trình A. Dù bên trong A có 10 luồng khác đang rảnh rỗi muốn chạy, chúng cũng bị khóa chặt. Mất trắng toàn bộ lợi ích của đa luồng!", citation: "Chương 2.2.4: Implementing Threads in User Space." },
+            { category: "User vs Kernel Threads", q: "Để khắc phục lỗi Blocked của ULT, người ta phải dùng các hàm bọc (Wrapper functions) hoặc System call đặc biệt nào?", options: ["Lệnh exit().", "System call `select()` (kiểm tra trước xem I/O có bị block không).", "Tăng thêm RAM.", "Dùng chuột quang."], correct: 1, explanation: "Trước khi luồng đọc file, Thư viện luồng sẽ gọi hàm `select()` để hỏi OS: 'Chỗ đĩa đó đã có dữ liệu chưa?'. Nếu chưa, thư viện sẽ cất luồng đó đi, gọi luồng khác chạy (không gọi `read()` nữa để tránh OS block cả đám). Điều này đòi hỏi viết lại toàn bộ thư viện I/O.", citation: "Chương 2.2.4: Implementing Threads in User Space." },
+            { category: "User vs Kernel Threads", q: "Trong Luồng mức hạt nhân (Kernel-Level Threads - KLT), Bảng luồng (Thread Table) nằm ở đâu?", options: ["Nằm trong ổ cứng ảo.", "Nằm trong không gian User của tiến trình.", "Nằm bên trong Kernel (Nhân HĐH). Kernel chịu trách nhiệm trực tiếp lưu trữ, định thời và quản lý mọi luồng.", "Nằm trên máy chủ Internet."], correct: 2, explanation: "Ở KLT, Kernel tham gia trực tiếp vào cuộc chơi. Khi bạn gọi `pthread_create`, nó bắn System Call xuống Kernel. Kernel tạo một mục mới trong Thread Table của nó. Khi đó, Kernel là người quyết định luồng nào của tiến trình nào được chạy.", citation: "Chương 2.2.4: Implementing Threads in the Kernel." },
+            { category: "User vs Kernel Threads", q: "Ưu điểm của Luồng mức hạt nhân (KLT) trong việc xử lý Page Fault (Lỗi trang) là gì?", options: ["Page fault bị tắt hoàn toàn.", "Hệ thống tự sửa lỗi code.", "Nếu một luồng bị dính Page Fault (chờ kéo dữ liệu từ đĩa), Kernel có thể ngắt luồng đó và chuyển CPU sang cho một luồng KHÁC của CÙNG tiến trình đó chạy tiếp.", "Nó sẽ xóa file bị lỗi."], correct: 2, explanation: "Đây là điểm KLT đánh bại ULT hoàn toàn. Vì Kernel biết tiến trình này có 5 luồng. Khi luồng số 1 dính Page fault (bị block), Kernel lập tức lấy luồng số 2 của chính tiến trình đó nạp vào CPU. Không ai bị ảnh hưởng oan.", citation: "Chương 2.2.4: Implementing Threads in the Kernel." },
+            { category: "User vs Kernel Threads", q: "Nhược điểm lớn của Luồng mức hạt nhân (KLT) là gì?", options: ["Luôn gây cháy CPU do nóng.", "Quá trình tạo luồng, hủy luồng và chuyển đổi luồng (Context switch) quá tốn kém (chậm) vì mọi thao tác đều phải đi qua cửa System Call vào Kernel mode.", "Bị giới hạn ở 2 luồng.", "Không hỗ trợ đa nhiệm."], correct: 1, explanation: "Mọi thao tác quản lý luồng đều đắt đỏ như quản lý tiến trình. Để tạo luồng, phải tốn một lệnh Trap. Để hủy cũng tốn Trap. Nhiều HĐH phải chế ra trò 'Tái chế luồng' (Thread recycling) để đỡ phải xóa/tạo lại KLT liên tục.", citation: "Chương 2.2.4: Implementing Threads in the Kernel." },
+            { category: "User vs Kernel Threads", q: "Hệ thống Đa nhân (Multicore/Multiprocessor) sẽ ưu ái loại luồng nào hơn để có thể thực thi song song thực sự (True Parallelism)?", options: ["Luồng mức người dùng (ULT).", "Luồng mức hạt nhân (KLT).", "Cả hai đều không chạy được.", "Chỉ chạy bằng Batch system."], correct: 1, explanation: "Nếu bạn dùng ULT, Kernel chỉ thấy 1 tiến trình. Mà 1 tiến trình thì Kernel chỉ xếp nó chạy trên 1 Core CPU duy nhất (dù bạn có 8 Cores). Nếu dùng KLT, Kernel biết bạn có 4 luồng, nó vứt mỗi luồng lên 1 Core để chạy song song thực sự.", citation: "Chương 2.2.4: Threads in User Space vs Kernel." },
+            { category: "User vs Kernel Threads", q: "Nếu một kiến trúc cho phép Lập trình viên tự viết các Thuật toán định thời (Scheduling algorithm) TÙY BIẾN cho từng tiến trình, thì đó là đặc quyền của loại luồng nào?", options: ["Kernel-Level Threads.", "User-Level Threads.", "Không thể thực hiện được.", "Chỉ áp dụng cho Web Server."], correct: 1, explanation: "Với ULT, bạn tự viết Thư viện luồng. Nên nếu bạn muốn luồng giao diện chạy 80%, luồng nhạc chạy 20%, bạn tự lập trình bộ Scheduler của riêng bạn (Custom scheduling). Ở KLT, bạn phải tuân thủ bộ Scheduler cứng nhắc của Kernel.", citation: "Chương 2.2.4: Implementing Threads in User Space." },
+            { category: "User vs Kernel Threads", q: "Vấn đề 'Tái chế luồng' (Thread Recycling) thường được áp dụng ở KLT để làm gì?", options: ["Bảo vệ môi trường sinh thái.", "Khi một luồng hủy, bộ nhớ của nó không bị xóa đi mà được đánh dấu 'không dùng'. Khi cần tạo luồng mới, HĐH dùng lại xác luồng cũ để tiết kiệm chi phí TRAP hệ thống.", "Chuyển mã độc sang luồng khác.", "Gửi dữ liệu qua USB."], correct: 1, explanation: "Việc tạo mới/hủy KLT ở Kernel cực kỳ chậm. HĐH tối ưu bằng cách: Luồng chết không mang đi chôn, mà để cái xác đó. Luồng mới sinh ra thì nhập hồn vào cái xác cũ, tiết kiệm được mớ thời gian cấp phát bộ nhớ trong Kernel.", citation: "Chương 2.2.4: Implementing Threads in the Kernel." },
+
+            // ================== TRIỂN KHAI LAI & NÂNG CAO (21-30) ==================
+            { category: "Triển khai lai & Nâng cao", q: "Cơ chế 'Triển khai lai' (Hybrid Implementation / M:N Model) kết hợp cả ULT và KLT như thế nào?", options: ["Hủy hoàn toàn ULT.", "Kernel cung cấp các luồng KLT. Bên trên không gian User, thư viện ULT sẽ ánh xạ (multiplex) nhiều luồng User lên một hoặc vài luồng KLT.", "Cộng tốc độ của 2 loại làm một.", "Chỉ dùng cho HĐH nhúng."], correct: 1, explanation: "Đây là mô hình M luồng User chạy trên N luồng Kernel (M > N). Lập trình viên thoải mái tạo 100 luồng ULT siêu nhẹ (tạo nhanh). Nhưng dưới đáy, Thư viện chia 100 luồng đó phân bổ lên 4 luồng KLT. Nếu 1 KLT bị block, 3 KLT còn lại vẫn gánh team.", citation: "Chương 2.2.4: Hybrid Implementations." },
+            { category: "Triển khai lai & Nâng cao", q: "Khái niệm 'Pop-up Thread' (Luồng bật lên) rất hữu ích trong thiết kế máy chủ mạng (Distributed Systems). Cơ chế của nó là gì?", options: ["Hiện quảng cáo trên màn hình.", "Thay vì một luồng phải Block để chờ dữ liệu mạng đến, khi có gói tin mạng vừa bay vào, Hệ thống lập tức tạo mới một luồng (Pop-up) hoàn toàn mới ĐỂ XỬ LÝ RIÊNG gói tin đó.", "Luồng tự động tắt máy.", "Khởi động lại modem mạng."], correct: 1, explanation: "Trong các hệ thống phân tán tốc độ cao, việc bắt 1 luồng đứng ngóng mạng rồi gọi nó dậy tốn thời gian khôi phục trạng thái. Pop-up thread thì gói tin đến phát, HĐH đẻ luôn 1 luồng trần truồng (không có trạng thái cũ) để xử lý cái tin đó luôn, cực kỳ nhanh.", citation: "Chương 2.2.5: Pop-Up Threads." },
+            { category: "Triển khai lai & Nâng cao", q: "Chuyển code từ Đơn luồng (Single-thread) sang Đa luồng (Multi-thread) thường gặp thảm họa với các 'Biến toàn cục' (Global variables), điển hình là biến `errno` trong UNIX. Vấn đề đó là gì?", options: ["Biến bị tràn bộ nhớ.", "Khi Luồng 1 bị lỗi, nó ghi mã lỗi vào `errno`, chưa kịp đọc thì CPU chuyển sang Luồng 2. Luồng 2 cũng lỗi, ghi đè mã khác vào `errno`. Lúc Luồng 1 chạy lại, đọc sai mã lỗi của mình.", "Biến tự động bị mã hóa.", "Không hỗ trợ kiểu int."], correct: 1, explanation: "Các hàm C cổ điển được viết cho mô hình 1 tiến trình - 1 luồng. Biến toàn cục `errno` dùng chung cho mọi hàm. Đa luồng chia sẻ chung RAM, hai luồng cùng gọi hàm, cùng sửa `errno` gây ra Race Condition (Điều kiện tranh đoạt) chết người.", citation: "Chương 2.2.6: Making Single-Threaded Code Multithreaded." },
+            { category: "Triển khai lai & Nâng cao", q: "Để giải quyết vấn đề Biến toàn cục trong môi trường đa luồng, giải pháp phổ biến nhất là gì?", options: ["Cấm sử dụng hàm C.", "Tạo ra các biến toàn cục ĐỘC LẬP TỪNG LUỒNG (Thread-Specific Data / Thread Local Storage). Tức là mỗi luồng có bản sao `errno` của riêng nó.", "Chạy máy ảo riêng cho mỗi luồng.", "Xóa biến đó đi."], correct: 1, explanation: "Các thư viện luồng cho phép cấp phát dữ liệu riêng tư (Private global variables). Dù gọi tên là `errno`, nhưng bên dưới HĐH sẽ trỏ biến đó vào vùng nhớ riêng của Luồng đang gọi. Luồng A thấy `errno = 2`, Luồng B thấy `errno = 5`.", citation: "Chương 2.2.6: Making Single-Threaded Code Multithreaded." },
+            { category: "Triển khai lai & Nâng cao", q: "Hàm (Function) được gọi là 'Reentrant' (Có thể tái nhập) nghĩa là gì trong ngữ cảnh Đa luồng?", options: ["Hàm có thể trả về nhiều kết quả.", "Hàm được viết cẩn thận, không sử dụng biến tĩnh (static) hay biến toàn cục chưa bảo vệ. Nó cho phép NHIỀU luồng gọi và chạy hàm này CÙNG MỘT LÚC mà kết quả không bị sai.", "Hàm không bao giờ kết thúc.", "Hàm tự động nén dữ liệu."], correct: 1, explanation: "Ví dụ hàm `malloc()`. Nếu Luồng 1 đang xin RAM dở dang (đang cập nhật danh sách RAM), bị ngắt, Luồng 2 nhảy vào cũng gọi `malloc()`. Danh sách RAM sẽ nát bét. Để đa luồng chạy an toàn, các hàm chuẩn C phải được viết lại thành bản 'Reentrant' (ví dụ dùng Mutex để khóa).", citation: "Chương 2.2.6: Making Single-Threaded Code Multithreaded." },
+            { category: "Triển khai lai & Nâng cao", q: "Mô hình 'Scheduler Activations' (Kích hoạt bộ định thời) do Anderson et al. đề xuất nhằm mục tiêu tối thượng nào?", options: ["Tiết kiệm pin cho Laptop.", "Bắt chước chức năng của luồng hạt nhân (KLT) nhưng với hiệu suất siêu nhanh và tính linh hoạt của luồng người dùng (ULT). Bằng cách dùng cơ chế Upcall.", "Chạy mượt game 3D.", "Ngăn virus chiếm CPU."], correct: 1, explanation: "Scheduler Activations là một mô hình cực hay. Kernel vẫn quản lý luồng, nhưng khi có sự cố (như một luồng bị block do Page Fault), thay vì Kernel tự giải quyết, Kernel bắn một cái thư thông báo ngược LÊN (Upcall) cho Thư viện User: 'Luồng 1 của mày bị kẹt rồi, mày xếp luồng 2 chạy đi'.", citation: "Chương 2.2.4: Scheduler Activations." },
+            { category: "Triển khai lai & Nâng cao", q: "Khái niệm 'Upcall' trong Scheduler Activations khác với 'System Call' như thế nào?", options: ["Upcall chạy chậm hơn.", "System Call là Ứng dụng kêu cứu Kernel (xuống). Upcall là Kernel chủ động thông báo (ngược lên) cho Ứng dụng biết một sự kiện phần cứng vừa xảy ra.", "Upcall chỉ dùng cho USB.", "System Call tốn phí, Upcall miễn phí."], correct: 1, explanation: "Giao tiếp bình thường là Top-down (User gọi Kernel). Upcall phá vỡ quy tắc này, nó là Bottom-up. Giống như kiểu sếp (Kernel) nhắn tin cho nhân viên (User library) báo cáo tình hình. Rất khó thiết kế vì vi phạm nguyên tắc bảo mật layer.", citation: "Chương 2.2.4: Scheduler Activations." },
+            { category: "Triển khai lai & Nâng cao", q: "Vấn đề 'Quản lý Stack' trong Đa luồng trở nên phức tạp là do:", options: ["Stack dễ bị nhiễm virus.", "Mỗi luồng có 1 Stack riêng. Nếu không biết trước luồng cần gọi hàm sâu bao nhiêu, ta khó cấp đủ RAM cho Stack. Nếu cấp quá lớn thì lãng phí, cấp quá nhỏ thì tràn bộ nhớ (Stack Overflow) đè lên dữ liệu luồng khác.", "CPU không hỗ trợ nhiều Stack.", "Stack Pointer bị kẹt."], correct: 1, explanation: "Khi chỉ có 1 tiến trình, Stack cứ mọc từ đỉnh RAM kéo xuống, Data mọc từ đáy kéo lên, bao la bát ngát. Nhưng với Đa luồng, bạn có 100 cái Stack chen chúc trong cùng 1 cục RAM. Một luồng đệ quy quá sâu sẽ xuyên thủng stack của luồng hàng xóm.", citation: "Chương 2.2.6: Stack Management." },
+            { category: "Triển khai lai & Nâng cao", q: "Một hệ thống thay vì dùng Đa luồng (Multi-threading), người ta có thể thiết kế máy chủ mạng dưới dạng Đơn luồng (Single-thread) nhưng điều khiển bằng Máy trạng thái sự kiện (Event-driven / Finite-state machine). Ví dụ này nhắc tới phần mềm nổi tiếng nào?", options: ["Hệ điều hành Windows.", "Máy chủ Web NGINX hoặc Node.js (Asynchronous I/O).", "Trình duyệt Google Chrome.", "Phần mềm Photoshop."], correct: 1, explanation: "Đa luồng rất phức tạp (Race condition, Deadlock). Các máy chủ hiệu năng cực cao như NGINX hay Node.js chọn con đường khác: Chỉ dùng 1 Luồng duy nhất, kết hợp Hàm I/O phi đồng bộ (Non-blocking I/O). Khi gọi đọc đĩa, luồng không chờ mà ghi vào danh sách sự kiện, tiếp tục làm việc khác. Tốc độ kinh hoàng mà không lo đồng bộ hóa bộ nhớ.", citation: "Chương 2.2.1: Threads vs Event-Driven architectures." },
+            { category: "Triển khai lai & Nâng cao", q: "Tóm lại, nếu bài toán đòi hỏi phải tạo ra và hủy đi HÀNG TRĂM NGÀN thực thể chạy song song mỗi giây, kiến trúc sư phần mềm nên chọn mô hình nào?", options: ["Kernel-Level Threads (KLT).", "Đa Tiến trình (Multiple Processes).", "User-Level Threads (ULT) hoặc Event-Driven.", "Batch Processing System."], correct: 2, explanation: "Việc đẻ/hủy hàng trăm ngàn KLT hay Tiến trình sẽ làm cháy CPU vì System Call Trap quá nhiều. ULT (ví dụ Goroutines trong Golang) cho phép tạo hàng triệu luồng vì bản chất nó chỉ là phân bổ lại một chút RAM trong không gian User, siêu nhẹ và siêu nhanh.", citation: "Chương 2.2.4 (Tổng kết so sánh chi phí luồng)." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+
+            quizData.forEach((qObj) => {
+                // Section Divider
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-zinc-900 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                // Question Block
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${questionCounter}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (CLRS Style):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        // Ensure MathJax renders if present
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

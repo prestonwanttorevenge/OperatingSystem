@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 1.3</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            300: '#d4d4d8',
+                            400: '#a1a1aa',
+                            500: '#71717a',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #fafafa;
+            color: #18181b;
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .option-btn.selected-correct {
+            background-color: #f0fdf4 !important;
+            border-color: #22c55e !important;
+            color: #14532d !important;
+            font-weight: 500;
+        }
+        .option-btn.selected-wrong {
+            background-color: #fef2f2 !important;
+            border-color: #ef4444 !important;
+            color: #7f1d1d !important;
+        }
+        .option-btn.show-correct {
+            background-color: #f0fdf4 !important;
+            border-color: #22c55e !important;
+            color: #14532d !important;
+        }
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .answer-block {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #f4f4f5; 
+            border-left: 2px solid #52525b; 
+            color: #3f3f46; 
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .answer-block.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .clrs-proof {
+            position: relative;
+            padding-left: 0.5rem;
+        }
+        .clrs-proof::after {
+            content: "■";
+            display: block;
+            text-align: right;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #71717a;
+        }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1">
+                    <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-64 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Mục Lục Khóa Học</h2>
+                <nav class="flex flex-col gap-1">
+                    <a href="#" class="tab-btn block px-4 py-2.5 text-sm font-medium transition-colors border-l-2 border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50">
+                        Chương 1.1: HĐH là gì?
+                    </a>
+                    <a href="#" class="tab-btn block px-4 py-2.5 text-sm font-medium transition-colors border-l-2 border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50">
+                        Chương 1.2: Lịch sử HĐH
+                    </a>
+                    <a href="#" class="tab-btn block px-4 py-2.5 text-sm font-medium transition-colors border-l-2 bg-zinc-100 border-zinc-900 text-zinc-900">
+                        Chương 1.3: Phần cứng
+                    </a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Lưu ý:</strong> Bấm vào đáp án để chọn. Hệ thống sẽ khóa câu hỏi và hiện lời giải chi tiết bên dưới theo phong cách học thuật CLRS.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-10">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 1.3: PHẦN CỨNG MÁY TÍNH CƠ BẢN</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Dựa trên giáo trình Modern Operating Systems - Andrew S. Tanenbaum | Số lượng: 20 câu</p>
+                    <hr class="mt-6 border-zinc-200">
+                </div>
+
+                <div id="questions-list" class="space-y-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-200 bg-zinc-50 text-zinc-500 py-8 text-center no-print mt-auto">
+        <p class="text-sm font-medium">Hệ thống Trắc nghiệm Hệ Điều Hành (Chuẩn Tanenbaum) &copy; 2026.</p>
+        <p class="text-xs mt-1">Minimalist UI, Powered by Tailwind CSS.</p>
+    </footer>
+
+    <script>
+        // Data for Chapter 1.3: Review of Computer Hardware
+        const quizData = [
+            {
+                q: "Thanh ghi (Register) nào trong CPU chứa địa chỉ của bộ nhớ (RAM) nơi lưu trữ câu lệnh tiếp theo sẽ được thực thi?",
+                options: [
+                    "Stack Pointer (SP).",
+                    "Program Counter (PC).",
+                    "Program Status Word (PSW).",
+                    "Instruction Register (IR)."
+                ],
+                correct: 1,
+                explanation: "Program Counter (Bộ đếm chương trình) đóng vai trò là 'người dẫn đường'. CPU nhìn vào thanh ghi này để biết phải đến vị trí nào trong RAM để lấy (fetch) câu lệnh tiếp theo về chạy. Sau khi lấy lệnh, PC tự động tăng lên để trỏ sang lệnh kế.",
+                citation: "Chương 1.3.1: Processors (Registers)."
+            },
+            {
+                q: "Vai trò của thanh ghi Stack Pointer (SP) là gì?",
+                options: [
+                    "Lưu trữ các bít trạng thái của CPU như báo lỗi tràn số, số âm.",
+                    "Trỏ đến câu lệnh hiện tại đang được nạp vào CPU.",
+                    "Trỏ đến đỉnh của ngăn xếp (Stack) hiện tại trong bộ nhớ.",
+                    "Chuyển đổi giữa User mode và Kernel mode."
+                ],
+                correct: 2,
+                explanation: "Stack Pointer trỏ đến phần đỉnh của bộ nhớ Stack. Cấu trúc Stack (vào sau ra trước) được dùng để chứa các biến cục bộ (local variables) và địa chỉ trả về khi một chương trình gọi hàm (function call).",
+                citation: "Chương 1.3.1: Processors (Registers)."
+            },
+            {
+                q: "Thanh ghi PSW (Program Status Word) là cực kỳ quan trọng đối với Hệ điều hành vì nó chứa thông tin gì?",
+                options: [
+                    "Chứa danh sách tất cả các tiến trình đang chạy.",
+                    "Chứa mật khẩu của quản trị viên (root).",
+                    "Chứa Mode bit (Chỉ định đang chạy User Mode hay Kernel Mode) và các bit cờ (Condition code bits).",
+                    "Chứa dung lượng còn lại của ổ cứng."
+                ],
+                correct: 2,
+                explanation: "PSW chứa các cờ báo hiệu trạng thái (ví dụ phép cộng vừa rồi có bằng 0 hay không, có bị tràn số không) và cực kỳ quan trọng: nó chứa bit điều khiển Mode. HĐH thao tác trên thanh ghi này để cấp hoặc tước quyền Kernel của tiến trình.",
+                citation: "Chương 1.3.1: Processors (PSW)."
+            },
+            {
+                q: "Kỹ thuật 'Pipelining' (Đường ống) trong thiết kế CPU hiện đại giúp tăng hiệu suất bằng cách nào?",
+                options: [
+                    "Chạy CPU ở nhiệt độ cực thấp bằng ống dẫn tản nhiệt nước.",
+                    "Chia quá trình thực thi một câu lệnh thành nhiều giai đoạn (Fetch, Decode, Execute) để có thể xử lý gối đầu nhiều câu lệnh cùng một lúc.",
+                    "Nén bộ nhớ lại bằng thuật toán đường ống.",
+                    "Chuyển dữ liệu qua cáp quang nhanh hơn."
+                ],
+                correct: 1,
+                explanation: "Hãy tưởng tượng như dây chuyền lắp ráp ô tô. Thay vì chờ làm xong hoàn toàn 1 cái xe mới làm xe khác, Pipelining cho phép: Lệnh 1 đang ở khâu Thực thi, lệnh 2 đang ở khâu Giải mã, lệnh 3 đang được nạp. Hàng tỷ lệnh được 'chảy' qua CPU mượt mà.",
+                citation: "Chương 1.3.1: Processors (Pipelining)."
+            },
+            {
+                q: "CPU 'Superscalar' (Siêu hướng lượng) có một lợi thế vượt trội gì so với CPU Pipeline thông thường?",
+                options: [
+                    "Nó dùng lượng điện cực ít.",
+                    "Có thể chạy Hệ điều hành mà không cần RAM.",
+                    "Nó sở hữu nhiều đơn vị thực thi (Execution Units) song song. Nó có thể lấy nhiều lệnh cùng lúc, nhét vào buffer, và nếu không xung đột, nó sẽ thực thi chúng song song trên các đơn vị khác nhau.",
+                    "Nó chỉ có thể chạy ở Kernel mode."
+                ],
+                correct: 2,
+                explanation: "Superscalar là bước tiến của Pipeline. Trong Pipeline, tại một khâu chỉ làm 1 lệnh. Trong Superscalar, CPU có thể có 2 bộ làm phép cộng, 1 bộ làm phép nhân. Nó có thể bốc 3 lệnh, thấy chúng không dính dáng gì nhau thì ném cho 3 bộ phận xử lý cái vèo cùng 1 tích tắc.",
+                citation: "Chương 1.3.1: Processors (Superscalar CPUs)."
+            },
+            {
+                q: "Hệ thống phân cấp bộ nhớ (Memory Hierarchy) sắp xếp từ trên xuống dưới (Nhỏ, đắt, siêu nhanh -> Lớn, rẻ, chậm) theo trật tự nào sau đây?",
+                options: [
+                    "Magnetic disk -> Cache -> Main Memory -> Registers.",
+                    "Registers -> Main Memory -> Cache -> Magnetic disk.",
+                    "Registers -> Cache -> Main Memory -> Magnetic disk -> Magnetic tape.",
+                    "Cache -> Registers -> Magnetic disk -> Main Memory."
+                ],
+                correct: 2,
+                explanation: "Đỉnh chóp là Thanh ghi (Registers) với 1ns (bằng tốc độ lõi CPU). Dưới đó là Cache (~2ns). Tiếp theo là RAM (Main memory ~10ns). Chậm và to hơn là Đĩa từ (Magnetic disk ~10ms). Đáy cùng là Băng từ (Tape) siêu to siêu rẻ nhưng truy xuất mất vài chục giây.",
+                citation: "Chương 1.3.2: Memory, Hình 1-9."
+            },
+            {
+                q: "Lý do vật lý nào khiến ta không thể xây dựng bộ nhớ RAM chính to bằng tốc độ của Cache (hoặc Registers)?",
+                options: [
+                    "Do Hệ điều hành không hỗ trợ RAM tốc độ cao.",
+                    "Do cạn kiệt nguyên liệu Silicon trên trái đất.",
+                    "Vì RAM được làm từ vật liệu rẻ (DRAM) để giảm giá thành, và bộ nhớ dung lượng càng lớn thì tín hiệu điện càng mất nhiều thời gian để truyền qua khoảng cách vật lý của chip.",
+                    "Do người dùng không có nhu cầu mua RAM nhanh."
+                ],
+                correct: 2,
+                explanation: "Có 2 lý do: Kinh tế (DRAM dùng 1 transistor+1 capacitor rẻ nhưng chậm. SRAM ở Cache dùng 6 transistor đắt lòi mắt nhưng cực nhanh). Vật lý: Chip càng to, quãng đường đi của electron (dù tốc độ ánh sáng) vẫn mất thời gian đáng kể, sinh ra độ trễ.",
+                citation: "Chương 1.3.2: Memory."
+            },
+            {
+                q: "Bộ đệm Cache trong CPU hoạt động hiệu quả (hit rate cao) dựa trên nguyên lý cơ bản nào của khoa học máy tính?",
+                options: [
+                    "Nguyên lý loại trừ lẫn nhau (Mutual Exclusion).",
+                    "Nguyên lý cục bộ (Locality of Reference).",
+                    "Nguyên lý Đa luồng (Multithreading).",
+                    "Nguyên lý ảo hóa (Virtualization)."
+                ],
+                correct: 1,
+                explanation: "Nguyên lý cục bộ có 2 dạng: Cục bộ không gian (nếu bạn đọc biến A, khả năng rất cao bạn sẽ đọc biến kế bên nó ngay sau đó, nên Cache gom nguyên khối mang về) và Cục bộ thời gian (biến A vừa được dùng xong, khả năng rất cao lát nữa sẽ dùng lại).",
+                citation: "Chương 1.3.2: Memory (Cache)."
+            },
+            {
+                q: "Bộ nhớ L1 Cache thường nằm ở đâu trong hệ thống?",
+                options: [
+                    "Nằm trên bo mạch chủ (Motherboard).",
+                    "Nằm bên trong chip CPU (Inside the CPU).",
+                    "Nằm trên thẻ nhớ cắm ngoài.",
+                    "Nằm trên ổ cứng SSD."
+                ],
+                correct: 1,
+                explanation: "L1 Cache (Cache cấp 1) thường được hàn chết ngay bên trong nhân (core) của vi xử lý để đạt tốc độ truy xuất ngang ngửa với tốc độ xung nhịp CPU, không độ trễ. L2 Cache có thể nằm chung chip nhưng xa hơn một chút, hoặc nằm riêng rẽ.",
+                citation: "Chương 1.3.2: Memory (Cache)."
+            },
+            {
+                q: "So với RAM (Volatile Memory), bộ nhớ ROM (Read-Only Memory) có đặc tính gì quan trọng để máy tính có thể khởi động?",
+                options: [
+                    "Nó có tốc độ nhanh hơn cả L1 Cache.",
+                    "Nó rẻ như băng từ.",
+                    "Nó là bộ nhớ không bay hơi (Non-volatile), nghĩa là khi tắt điện dữ liệu vẫn còn. Nó chứa BIOS/UEFI để kích hoạt máy tính khi vừa bật nguồn.",
+                    "Nó có thể nâng cấp dung lượng vô hạn."
+                ],
+                correct: 2,
+                explanation: "RAM bị mất sạch trí nhớ khi cúp điện. Nếu khởi động máy, CPU sẽ ngơ ngác không biết phải chạy lệnh từ đâu vì RAM đang trống trơn. ROM lưu vĩnh viễn (hoặc bán vĩnh viễn như Flash/EEPROM) đoạn mã mồi (bootstrap) để dạy máy tính cách tìm ổ cứng nạp OS.",
+                citation: "Chương 1.3.2: Memory (ROM/EEPROM/Flash)."
+            },
+            {
+                q: "Nhược điểm trí mạng của Đĩa từ tính (Magnetic Disks) so với RAM là gì?",
+                options: [
+                    "Nó chỉ đọc được, không ghi được.",
+                    "Dung lượng lưu trữ của nó quá nhỏ.",
+                    "Nó có các thành phần chuyển động cơ học (tay từ, đĩa xoay) sinh ra độ trễ rất lớn (seek time, rotational delay).",
+                    "Nó dễ bị virus tấn công hơn RAM."
+                ],
+                correct: 2,
+                explanation: "Đĩa cơ (HDD) lưu dữ liệu trên các phiến đĩa quay 5400-7200 vòng/phút. Kim từ tính phải 'bay' lơ lửng, dò tìm đến đúng track (Seek time) và chờ đĩa xoay đúng sector (Rotational latency). Khoảng thời gian này tốn cỡ miliseconds, tức là chậm hơn RAM hàng triệu lần.",
+                citation: "Chương 1.3.3: Disks."
+            },
+            {
+                q: "Một thiết bị ngoại vi (I/O Device) như đĩa cứng thực chất cấu tạo từ hai thành phần chính nào?",
+                options: [
+                    "Màn hình và Bàn phím.",
+                    "Thiết bị cơ học/vật lý (Device) và Bộ điều khiển điện tử (Controller/Adapter).",
+                    "Phần cứng (Hardware) và Phần mềm (Software).",
+                    "Chip vi xử lý và Pin."
+                ],
+                correct: 1,
+                explanation: "HĐH không bao giờ nói chuyện trực tiếp với cái motor đĩa. Nó nói chuyện với cái Bộ điều khiển (Controller) - là một bảng mạch điện tử được lập trình để ra lệnh cho phần cơ học. HĐH giao tiếp bằng cách ghi lệnh vào các thanh ghi của Controller.",
+                citation: "Chương 1.3.4: I/O Devices."
+            },
+            {
+                q: "Một Device Driver (Trình điều khiển thiết bị) do nhà sản xuất (như NVIDIA, Intel) viết ra thường được HĐH chạy ở chế độ nào?",
+                options: [
+                    "Chạy ở User mode như ứng dụng bình thường.",
+                    "Chạy ở Safe mode.",
+                    "Thường chạy ở Kernel mode để có quyền tác động trực tiếp vào các thanh ghi của Controller trên bo mạch.",
+                    "Không cần chạy."
+                ],
+                correct: 2,
+                explanation: "Driver là phần mềm để HĐH hiểu được thiết bị phần cứng. Vì nó cần ghi thẳng vào thanh ghi I/O của phần cứng, nó cần đặc quyền tối đa. Đó là lý do vì sao một Driver dỏm/lỗi có thể gây ra màn hình xanh (Blue Screen of Death) kéo sập toàn bộ hệ thống.",
+                citation: "Chương 1.3.4: I/O Devices (Device Drivers)."
+            },
+            {
+                q: "Cơ chế 'Busy Waiting' (hay Polling) trong I/O hoạt động như thế nào?",
+                options: [
+                    "CPU đi ngủ và chờ I/O báo thức.",
+                    "CPU ra lệnh cho I/O, sau đó HĐH giao CPU cho ứng dụng khác chạy, khi nào I/O xong thì tính tiếp.",
+                    "CPU ra lệnh cho thiết bị, sau đó vào một vòng lặp liên tục đọc thanh ghi trạng thái của thiết bị để xem nó làm xong chưa. Nếu chưa thì tiếp tục hỏi.",
+                    "CPU bỏ qua bước I/O."
+                ],
+                correct: 2,
+                explanation: "Giống như đứa trẻ liên tục hỏi mẹ 'Mẹ ơi cơm chín chưa? Mẹ ơi cơm chín chưa?' mỗi giây 1 lần. Busy waiting cực kỳ lãng phí tài nguyên CPU vì CPU phải lặp vòng lặp liên tục mà không sinh ra giá trị tính toán gì. Chỉ dùng khi I/O trả kết quả quá nhanh.",
+                citation: "Chương 1.3.4: I/O Devices (Busy Waiting)."
+            },
+            {
+                q: "Cơ chế 'Interrupt' (Ngắt phần cứng) ưu việt hơn Busy Waiting ở điểm nào?",
+                options: [
+                    "Nó rẻ hơn về mặt chi phí sản xuất phần cứng.",
+                    "Nó bảo vệ máy tính khỏi virus.",
+                    "Khi CPU ra lệnh cho I/O, HĐH cất tiến trình đó đi và cho tiến trình khác chạy. Khi thiết bị I/O làm xong, nó phát tín hiệu điện (ngắt) báo cho CPU biết. CPU không phải lãng phí vòng lặp chờ.",
+                    "Nó làm tăng dung lượng đĩa cứng."
+                ],
+                correct: 2,
+                explanation: "Interrupt là 'chuông báo thức'. HĐH ra lệnh in giấy, rồi cho CPU đi tính toán đồ họa. Khi máy in in xong, mạch điều khiển máy in gõ chuông (Interrupt). CPU lập tức ngừng đồ họa, lưu trạng thái, xử lý nốt máy in, rồi lại quay về đồ họa.",
+                citation: "Chương 1.3.4: I/O Devices (Interrupts)."
+            },
+            {
+                q: "Vai trò của chip DMA (Direct Memory Access) là gì?",
+                options: [
+                    "Giúp CPU chia sẻ bộ nhớ cho máy ảo.",
+                    "Đảm nhận nhiệm vụ chuyển từng byte dữ liệu giữa Thiết bị I/O và RAM độc lập với CPU. CPU chỉ bị ngắt một lần khi toàn bộ khối dữ liệu lớn đã truyền xong.",
+                    "Mã hóa dữ liệu RAM.",
+                    "Ngăn chặn tràn bộ nhớ đệm (Buffer Overflow)."
+                ],
+                correct: 1,
+                explanation: "Dù có ngắt (Interrupt), nếu đĩa cứng báo ngắt sau MỖI byte được đọc thì CPU vẫn nát vì phải xử lý quá nhiều ngắt. DMA là một bộ điều khiển trung gian. CPU bảo DMA: 'Đọc cho tao 1000 byte vào vùng RAM này nhé'. DMA tự động hút 1000 byte từ đĩa bơm thẳng vào RAM, xong việc mới gọi ngắt CPU 1 lần.",
+                citation: "Chương 1.3.4: I/O Devices (DMA)."
+            },
+            {
+                q: "Bus nào trong máy tính được thiết kế như một liên kết điểm-điểm tốc độ cực cao để nối CPU thẳng với bộ nhớ và card đồ họa?",
+                options: [
+                    "USB (Universal Serial Bus).",
+                    "ISA Bus.",
+                    "PCIe (Peripheral Component Interconnect Express).",
+                    "SATA Bus."
+                ],
+                correct: 2,
+                explanation: "PCIe là kiến trúc bus hiện đại (chính xác hơn là liên kết mạng điểm-điểm nối các thành phần). Nó thay thế bus PCI cũ, mang lại băng thông gigabyte/s, hoàn hảo cho card màn hình và SSD NVMe.",
+                citation: "Chương 1.3.5: Buses (PCIe)."
+            },
+            {
+                q: "Khái niệm 'Plug and Play' (Cắm và Chạy) trên Bus USB có nghĩa là gì đối với Hệ điều hành?",
+                options: [
+                    "Không cần dùng dây cáp.",
+                    "Thiết bị tự cấp điện từ môi trường.",
+                    "Khi người dùng cắm chuột/bàn phím vào, HĐH lập tức nhận được ngắt, tự động dò xem thiết bị là gì và nạp đúng Driver vào Kernel mà không cần khởi động lại máy.",
+                    "Tốc độ truyền vượt qua giới hạn ánh sáng."
+                ],
+                correct: 2,
+                explanation: "USB (Universal Serial Bus) được tạo ra để loại bỏ mớ dây cáp lằng nhằng và bắt buộc phải tắt máy khi cắm thiết bị cũ (như cổng Serial, Parallel). USB hỗ trợ cắm nóng (hot-pluggable). HĐH lo toàn bộ việc khởi tạo ngầm đằng sau.",
+                citation: "Chương 1.3.5: Buses (USB)."
+            },
+            {
+                q: "Quá trình máy tính khởi động bắt đầu bằng việc đọc BIOS. Chữ BIOS là viết tắt của:",
+                options: [
+                    "Basic Input Output System.",
+                    "Binary Internal Operating System.",
+                    "Basic Integrated Operation Software.",
+                    "Built-in Intel Operating System."
+                ],
+                correct: 0,
+                explanation: "BIOS (Hệ thống Vào/Ra Cơ bản) chứa các tập lệnh sơ khai nằm trên ROM (hoặc EEPROM/Flash RAM) trên bo mạch chủ. Nó kiểm tra RAM, bàn phím, màn hình, rồi dò các thiết bị lưu trữ để tìm Master Boot Record, nạp HĐH vào RAM.",
+                citation: "Chương 1.3.6: Booting the Computer."
+            },
+            {
+                q: "Trong quá trình khởi động (Booting), khi BIOS đọc khu vực Master Boot Record (MBR) trên ổ cứng, nó đang tìm thứ gì?",
+                options: [
+                    "Tìm virus.",
+                    "Tìm File Word của người dùng.",
+                    "Tìm đoạn mã nhỏ gọi là Bootloader (Chương trình nạp HĐH), chương trình này sẽ biết làm thế nào để bốc toàn bộ hạt nhân (OS Kernel) từ đĩa cứng thả vào RAM và chuyển giao quyền kiểm soát.",
+                    "Tìm thông tin card mạng LAN."
+                ],
+                correct: 2,
+                explanation: "BIOS quá nhỏ để chứa toàn bộ Windows/Linux. Nó chỉ tìm sector đầu tiên của đĩa (MBR/GPT) lấy cái Bootloader (như GRUB, Windows Boot Manager). Bootloader sẽ biết File hệ thống nằm ở đâu trên đĩa C để kéo lên RAM.",
+                citation: "Chương 1.3.6: Booting the Computer."
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+
+            quizData.forEach((qObj, index) => {
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${index + 1}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (Kiến trúc Phần cứng):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        answerDiv.classList.add('show');
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                
+                if (index < quizData.length - 1) {
+                    const hr = document.createElement('hr');
+                    hr.className = "mt-10 border-zinc-100";
+                    qBlock.appendChild(hr);
+                }
+
+                container.appendChild(qBlock);
+            });
+        });
+    </script>
+</body>
+</html>
+
+

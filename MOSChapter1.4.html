@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Core Concepts</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-64 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Core Concepts</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Processes" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1">1. Processes (Tiến trình)</a>
+                    <a href="#section-Address Spaces" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1">2. Address Spaces</a>
+                    <a href="#section-Files" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1">3. Files & File Systems</a>
+                    <a href="#section-System Calls" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1">4. System Calls</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Tiến độ:</strong> 40 câu hỏi.<br>Hệ thống sẽ khóa đáp án sau khi chọn và hiển thị lời giải chi tiết.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-2">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 1.4 & 1.5: CÁC KHÁI NIỆM CỐT LÕI (CORE CONCEPTS)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Đại chiến 40 câu: Processes, Address Spaces, Files, System Calls</p>
+                </div>
+                <div id="questions-list" class="space-y-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== SECTION 1: PROCESSES ==================
+            { category: "Processes", q: "Khái niệm trung tâm của mọi Hệ điều hành là 'Tiến trình' (Process). Định nghĩa cơ bản nhất của một tiến trình là gì?", options: ["Một tập tin nhị phân (.exe) lưu trên ổ đĩa.", "Một chương trình đang trong quá trình thực thi (A program in execution).", "Một đoạn mã nguồn được viết bằng ngôn ngữ C.", "Một thuật toán được mô tả bằng mã giả."], correct: 1, explanation: "Một chương trình (Program) chỉ là một tập tin vô hồn nằm trên đĩa cứng. Khi Hệ điều hành nạp nó vào RAM và cấp CPU để chạy, nó 'sống dậy' và được gọi là một Tiến trình (Process). Tiến trình bao gồm mã lệnh, dữ liệu, ngăn xếp (stack) và các giá trị thanh ghi hiện tại.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Hệ điều hành quản lý thông tin của một tiến trình (khi nó bị tạm ngưng để nhường CPU cho tiến trình khác) bằng cấu trúc dữ liệu nào?", options: ["Address Space (Không gian địa chỉ).", "Process Tree (Cây tiến trình).", "Process Table (Bảng tiến trình / Process Control Block).", "System Call Table (Bảng lời gọi hệ thống)."], correct: 2, explanation: "Bảng tiến trình (Process Table) là một mảng hoặc danh sách liên kết. Mỗi phần tử chứa thông tin về một tiến trình: trạng thái CPU (các thanh ghi), bộ đếm chương trình (PC), con trỏ ngăn xếp (SP), v.v. Nó giúp OS 'đóng băng' tiến trình và 'rã đông' nó sau này chính xác tại vị trí đang chạy dở.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Trong hệ điều hành UNIX/Linux, một tiến trình có thể tạo ra tiến trình con bằng cách sử dụng System Call nào?", options: ["CreateProcess()", "spawn()", "fork()", "exec()"], correct: 2, explanation: "Trong UNIX, lệnh `fork()` được dùng để nhân bản tiến trình hiện tại. Tiến trình tạo ra lệnh fork gọi là Tiến trình cha (Parent Process), tiến trình mới sinh ra là Tiến trình con (Child Process) và là một bản sao chính xác về không gian nhớ của tiến trình cha.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Mối quan hệ giữa các tiến trình trong hệ thống UNIX được tổ chức theo cấu trúc nào?", options: ["Cấu trúc đồ thị vòng (Circular Graph).", "Cấu trúc cây phân cấp (Process Tree).", "Cấu trúc danh sách liên kết vòng.", "Không có cấu trúc, các tiến trình hoàn toàn độc lập."], correct: 1, explanation: "Ở UNIX, tiến trình cha tạo ra tiến trình con, tiến trình con lại tạo ra cháu. Chúng tạo thành một Cây tiến trình (Process Tree) duy nhất, với tiến trình gốc là `init` (hoặc `systemd`). Ở Windows, khái niệm cây này không tồn tại rõ ràng, các tiến trình tương đối bình đẳng sau khi được tạo ra.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Khái niệm IPC (Interprocess Communication) ra đời nhằm mục đích gì?", options: ["Cho phép người dùng giao tiếp với phần cứng.", "Cho phép các tiến trình trò chuyện, trao đổi dữ liệu và đồng bộ hóa với nhau một cách an toàn.", "Biên dịch mã nguồn thành ngôn ngữ máy.", "Phân phối dung lượng đĩa cứng."], correct: 1, explanation: "Các tiến trình chạy độc lập và bị cô lập bộ nhớ. Khi chúng cần phối hợp làm việc (ví dụ: tiến trình tải file và tiến trình ghi file), OS cung cấp các cơ chế IPC (như Pipe, Shared Memory, Message Passing) để chúng trao đổi thông tin mà không dẫm chân lên nhau.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Hiện tượng 'Deadlock' (Bế tắc/Khóa chết) xảy ra ở các tiến trình khi nào?", options: ["Khi một tiến trình sử dụng hết 100% CPU, không nhường cho ai.", "Khi tiến trình bị lỗi chia cho 0.", "Khi hai hay nhiều tiến trình tạo thành một vòng tròn chờ đợi tài nguyên lẫn nhau, dẫn đến không ai có thể tiếp tục chạy.", "Khi RAM bị đầy không thể nạp thêm tiến trình."], correct: 2, explanation: "Giống như ngã tư kẹt xe chữ thập, Deadlock là tình trạng Tiến trình A giữ tài nguyên X, chờ tài nguyên Y; trong khi Tiến trình B giữ tài nguyên Y và chờ tài nguyên X. Kết quả là cả hai đứng im vĩnh viễn.", citation: "Chương 1.4.1: Processes (Deadlock)." },
+            { category: "Processes", q: "UID (User Identification) trong quản lý tiến trình được sử dụng để làm gì?", options: ["Xác định tiến trình nào được cấp CPU trước.", "Ghi nhận lượng điện năng tiến trình tiêu thụ.", "Xác định danh tính của người dùng sở hữu tiến trình, từ đó OS kiểm tra quyền truy cập tài nguyên (như quyền đọc/ghi file).", "Mã hóa dữ liệu trong RAM."], correct: 2, explanation: "Mỗi tiến trình thuộc về một người dùng (UID). Khi tiến trình đòi mở file, OS sẽ đối chiếu UID của tiến trình với quyền (rwx) của file đó để xem có được phép hay không. Superuser (UID=0 ở UNIX) có quyền tối thượng.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Trong UNIX, 'Signal' (Tín hiệu) là cơ chế dùng để làm gì đối với tiến trình?", options: ["Là phần mềm diệt virus quét qua tiến trình.", "Là một dạng ngắt phần mềm (software interrupt) để thông báo cho tiến trình về một sự kiện bất ngờ (ví dụ: người dùng bấm Ctrl-C).", "Là đèn báo trên bo mạch chủ.", "Là lệnh yêu cầu cấp thêm RAM."], correct: 1, explanation: "Signal là cách HĐH (hoặc tiến trình khác) 'chọt' vào một tiến trình đang chạy. Ví dụ báo lỗi Alarm, hoặc lệnh Kill. Khi nhận Signal, tiến trình sẽ tạm dừng việc đang làm để chạy hàm xử lý tín hiệu (Signal Handler).", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Khi một tiến trình gặp lỗi nghiêm trọng (Fatal error) như truy cập bộ nhớ trái phép, hệ điều hành thường sẽ tạo ra một file gì trên đĩa trước khi tiêu diệt nó?", options: ["Log file.", "Core dump (Bản sao bộ nhớ).", "Backup file.", "Executable file."], correct: 1, explanation: "OS thường lưu lại toàn bộ trạng thái không gian bộ nhớ của tiến trình vào một file gọi là 'Core dump'. Lập trình viên có thể dùng file này và các trình gỡ lỗi (debugger) để khám nghiệm tử thi xem tiến trình đã chết ở dòng code nào.", citation: "Chương 1.4.1: Processes." },
+            { category: "Processes", q: "Khác biệt cơ bản nhất giữa System Call `CreateProcess` (Windows) và bộ đôi `fork+exec` (UNIX) là gì?", options: ["CreateProcess chỉ dùng cho máy chủ, fork dùng cho PC.", "CreateProcess vừa tạo tiến trình mới vừa nạp thẳng chương trình mới vào đó. fork tạo ra bản sao, phải gọi thêm exec để nạp chương trình mới.", "fork chạy nhanh gấp 100 lần CreateProcess.", "Không có khác biệt gì."], correct: 1, explanation: "Trong Windows, CreateProcess làm tất cả trong 1 bước (tạo bộ nhớ, nạp file .exe, chạy). Trong UNIX, quá trình này chia làm 2 bước: `fork()` để tạo ra một bản sao hoàn hảo của mình, sau đó tiến trình con gọi `exec()` để xóa sạch não và nạp một chương trình mới vào.", citation: "Chương 1.4.1: Processes." },
+
+            // ================== SECTION 2: ADDRESS SPACES ==================
+            { category: "Address Spaces", q: "Khái niệm 'Không gian địa chỉ' (Address Space) của một tiến trình là gì?", options: ["Là kích thước vật lý của thanh RAM cắm trên Mainboard.", "Là danh sách các địa chỉ IP mạng mà tiến trình đó đang kết nối.", "Là một tập hợp các địa chỉ bộ nhớ (từ 0 đến một mức tối đa) mà tiến trình được phép sử dụng một cách hợp lệ để lưu mã lệnh và dữ liệu.", "Là khoảng trống trên đĩa cứng dành cho tiến trình."], correct: 2, explanation: "Mỗi tiến trình được cấp một Không gian địa chỉ (Address Space) giống như một sổ đỏ quyền sử dụng đất. Nó tạo ra ảo giác rằng tiến trình sở hữu một bộ nhớ liên tục bắt đầu từ địa chỉ 0, và tiến trình không thể 'chạm' sang vùng đất (địa chỉ) của tiến trình khác.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Hai vấn đề lớn nhất của việc chạy đa chương trình (Multiprogramming) trực tiếp trên bộ nhớ vật lý (không có cơ chế bảo vệ) là gì?", options: ["Tốn điện năng và sinh nhiệt cao.", "Bảo vệ (Protection - các tiến trình có thể vô tình ghi đè lên nhau) và Tái định vị (Relocation - chương trình biên dịch luôn bắt đầu ở địa chỉ 0, nhưng RAM vật lý thì không phải lúc nào cũng nạp nó vào vị trí 0).", "Virus dễ dàng xâm nhập và phần cứng bị hao mòn.", "CPU không xử lý kịp."], correct: 1, explanation: "Nếu vứt trần trụi các tiến trình vào chung một RAM vật lý: Thứ nhất, tiến trình A có lỗi có thể ghi đè sang mã của tiến trình B làm hệ thống sập (Protection). Thứ hai, mọi file .exe đều nghĩ nó chạy từ địa chỉ 0, khi nạp vào địa chỉ 10000 ở RAM, các lệnh JUMP sẽ nhảy sai chỗ (Relocation).", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Cơ chế nào của Hệ điều hành giải quyết triệt để vấn đề Bảo vệ và Tái định vị (Protection & Relocation)?", options: ["Lập lịch Round-Robin.", "Mã hóa mã nguồn.", "Bộ nhớ ảo (Virtual Memory) kết hợp với phần cứng MMU.", "Mạng máy tính cục bộ."], correct: 2, explanation: "Bộ nhớ ảo cô lập các không gian địa chỉ. Phần cứng MMU (Memory Management Unit) sẽ 'phiên dịch' tự động các địa chỉ ảo (từ 0) mà chương trình nhìn thấy thành các địa chỉ vật lý thật (ví dụ 15000) trên RAM một cách an toàn và vô hình với lập trình viên.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Trong cơ chế Bộ nhớ ảo, điều gì xảy ra nếu kích thước Không gian địa chỉ của tiến trình LỚN HƠN dung lượng RAM vật lý đang có?", options: ["Chương trình lập tức bị OS báo lỗi 'Out of Memory' và tắt nguồn.", "HĐH tự động mua thêm RAM từ Internet.", "HĐH cắt tiến trình thành các mảnh (Pages). Những mảnh đang cần dùng sẽ để ở RAM, những mảnh chưa cần sẽ bị đẩy ra đĩa cứng (Swapping/Paging).", "Chương trình sẽ tự động thu nhỏ lại bằng cách xóa bớt code."], correct: 2, explanation: "Đó là sức mạnh tối thượng của Virtual Memory. Bạn có 4GB RAM nhưng vẫn chạy được game 10GB. HĐH giữ các trang (Pages) đang hoạt động trên RAM, và lưu trữ phần còn lại trên ổ cứng. Khi CPU cần một trang đang ở đĩa, HĐH sẽ hoán đổi (Swap) nó vào RAM.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Một tiến trình ở User mode có thể trực tiếp đọc dữ liệu nằm trong Không gian địa chỉ của hệ điều hành (Kernel space) được không?", options: ["Không bao giờ, phần cứng sẽ chặn lại và báo lỗi (Trap / Segmentation Fault).", "Có, miễn là tiến trình đó chạy bằng quyền Administrator.", "Có, nếu nó dùng lệnh read().", "Được, nhưng dữ liệu trả về sẽ bị đảo ngược."], correct: 0, explanation: "Sự phân chia Address Space là thiết quân luật. Tiến trình User bị nhốt trong sandbox của nó. Bất kỳ nỗ lực nào cố truy cập địa chỉ ngoài ranh giới của nó, đặc biệt là vùng nhớ Kernel, sẽ bị phần cứng MMU tóm cổ và phát ngắt Trap về cho OS tiêu diệt ngay lập tức.", citation: "Chương 1.4.2 & 1.4.5: Protection." },
+            { category: "Address Spaces", q: "Thuật ngữ 'Address Translation' (Biên dịch địa chỉ) trong ngữ cảnh bộ nhớ có nghĩa là gì?", options: ["Dịch mã C sang mã Assembly.", "Quá trình phần cứng tự động biến đổi địa chỉ ảo (Virtual address) do CPU phát ra thành địa chỉ vật lý (Physical address) trên thanh RAM thực tế.", "Tìm địa chỉ IP của một trang web.", "Chuyển địa chỉ từ hệ Thập phân sang Nhị phân."], correct: 1, explanation: "Tiến trình ra lệnh: 'Lấy dữ liệu ở địa chỉ 1000'. Địa chỉ 1000 đó là ảo. Mạch MMU sẽ dịch: 'À, địa chỉ ảo 1000 của anh A thực chất đang nằm ở địa chỉ vật lý 25000 trên RAM'. Đây là Address Translation.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Kiến trúc 32-bit cung cấp một không gian địa chỉ ảo tối đa là bao nhiêu cho mỗi tiến trình?", options: ["2 GB.", "4 GB ($2^{32}$ byte).", "16 GB.", "1 Terabyte."], correct: 1, explanation: "Với 32 bit, hệ thống có thể tạo ra $2^{32} = 4,294,967,296$ địa chỉ khác nhau. Do mỗi địa chỉ trỏ đến 1 byte, kích thước tối đa của Address Space là 4 Gigabytes. Điều này trở nên chật chội với các phần mềm hiện đại, dẫn đến sự ra đời của hệ thống 64-bit.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Khái niệm 'Swapping' (Hoán đổi) trong quản lý bộ nhớ liên quan đến thiết bị nào sau đây?", options: ["Màn hình.", "Card mạng.", "Đĩa cứng (Disk) hoặc thiết bị lưu trữ thứ cấp.", "Card đồ họa."], correct: 2, explanation: "Khi RAM bị đầy, HĐH phải giải phóng chỗ trống bằng cách đẩy (Swap out) một số phần của các tiến trình đang rảnh rỗi ra ổ Đĩa cứng. Khi chúng cần chạy lại, HĐH lại kéo chúng (Swap in) từ đĩa vào RAM.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Khi tiến trình đang chạy cố gắng truy cập một địa chỉ ảo, nhưng MMU phát hiện ra mảnh dữ liệu đó hiện đang bị cất ở ổ cứng chứ chưa có trong RAM, hiện tượng gì sẽ xảy ra?", options: ["Page Fault (Lỗi trang). OS sẽ phải tạm ngưng tiến trình, ra đĩa cứng lấy dữ liệu vào RAM, rồi cho tiến trình chạy tiếp.", "Deadlock.", "Hỏng RAM vật lý.", "Lỗi chia cho 0."], correct: 0, explanation: "Page Fault không phải là lỗi làm chết chương trình, mà là một cơ chế báo hiệu: 'Dữ liệu chưa có sẵn trong RAM'. CPU sẽ bẫy về Kernel, OS sẽ tốn vài mili-giây để kéo mảnh dữ liệu (Page) từ ổ cứng lên RAM, cập nhật bảng ánh xạ, và cho CPU chạy lại lệnh vừa nãy.", citation: "Chương 1.4.2: Address Spaces." },
+            { category: "Address Spaces", q: "Để quản lý quyền truy cập bộ nhớ hiệu quả, nhiều hệ thống sử dụng một cặp thanh ghi phần cứng đơn giản nhất (trước khi có Paging) có tên là gì?", options: ["Program Counter & Stack Pointer.", "Base & Limit Registers (Thanh ghi Cơ sở và Thanh ghi Giới hạn).", "Instruction Register & Data Register.", "AX & BX."], correct: 1, explanation: "Thanh ghi Base chứa địa chỉ bắt đầu của tiến trình trên RAM. Thanh ghi Limit chứa độ dài của nó. Khi tiến trình gọi địa chỉ ảo X, phần cứng kiểm tra $X < Limit$. Nếu thỏa mãn, địa chỉ thực tế là $Base + X$. Nếu $X > Limit$, phần cứng bắn Trap (Lỗi truy cập ngoài vùng).", citation: "Chương 1.4.5: Protection." },
+
+            // ================== SECTION 3: FILES & FILE SYSTEMS ==================
+            { category: "Files", q: "Vai trò chính của hệ thống tệp (File System) do OS cung cấp là gì?", options: ["Biên dịch mã nguồn thành file chạy.", "Mã hóa mật khẩu hệ thống.", "Trừu tượng hóa (Abstract) sự phức tạp của đĩa vật lý (sector, track) thành một mô hình lô-gic đẹp đẽ, lưu trữ dữ liệu dưới dạng các tập tin (files) và thư mục (directories) dễ thao tác.", "Tăng tốc độ vòng quay của đĩa cứng vật lý."], correct: 2, explanation: "Không có File System, ổ cứng chỉ là một chuỗi hàng tỷ block 512-byte trống trơn. Bạn sẽ phải nhớ mình đã ghi bài hát ở block 10050. File System tạo ra lớp trừu tượng: Cho phép đặt tên file (baihat.mp3), sắp xếp vào thư mục (Music) và tự động quản lý không gian đĩa.", citation: "Chương 1.4.3: Files." },
+            { category: "Files", q: "Để tạo cấu trúc và nhóm các file lại với nhau, Hệ thống tệp sử dụng khái niệm gì?", options: ["Bảng băm (Hash Tables).", "Thư mục (Directories / Folders).", "Hàng đợi (Queues).", "Ngăn xếp (Stacks)."], correct: 1, explanation: "Directory (Thư mục) là một cơ chế giúp phân nhóm các file liên quan với nhau. Thư mục thực chất cũng là một loại 'file đặc biệt' mà nội dung bên trong nó chứa danh sách các file/thư mục con và địa chỉ của chúng trên đĩa.", citation: "Chương 1.4.3: Files." },
+            { category: "Files", q: "Khái niệm Đường dẫn tuyệt đối (Absolute Path) trong cấu trúc cây thư mục được hiểu như thế nào?", options: ["Là đường dẫn bắt đầu từ Thư mục hiện hành (Working directory).", "Là đường dẫn luôn bắt đầu từ Thư mục gốc (Root directory) và đi từ trên xuống dưới. Ví dụ ở UNIX: `/usr/ast/mailbox`.", "Là đường dẫn không chứa tên file.", "Là đường dẫn tới mạng Internet."], correct: 1, explanation: "Cây thư mục bắt đầu từ Root (ký hiệu `/` trong UNIX hoặc `C:\` trong Windows). Absolute Path chỉ ra toàn bộ lộ trình đi từ Root xuống tận gốc rễ để tìm file, độc lập với việc bạn đang đứng ở đâu.", citation: "Chương 1.4.3: Files (Path names)." },
+            { category: "Files", q: "Đường dẫn tương đối (Relative Path) phụ thuộc vào yếu tố nào để xác định đúng file?", options: ["Mật khẩu của người dùng.", "Kích thước của file.", "Thư mục làm việc hiện tại (Current Working Directory) của tiến trình.", "Tốc độ của ổ cứng."], correct: 2, explanation: "Nếu tiến trình đang đứng ở thư mục `/usr/ast`, đường dẫn tương đối `mailbox` sẽ được HĐH tự động hiểu thành `/usr/ast/mailbox`. Điều này giúp gõ lệnh ngắn gọn hơn thay vì lúc nào cũng phải gõ đường dẫn tuyệt đối dài ngoằng.", citation: "Chương 1.4.3: Files." },
+            { category: "Files", q: "Trong UNIX/Linux, mọi thứ đều là file. Khái niệm 'Block Special Files' (Tập tin đặc biệt khối) thường đại diện cho thiết bị nào?", options: ["Thiết bị nhập liệu ngẫu nhiên (chuột).", "Thiết bị in ấn (máy in).", "Các thiết bị bao gồm các khối được đánh số ngẫu nhiên, ví dụ như Ổ đĩa cứng (Disks).", "Các phần mềm diệt virus."], correct: 2, explanation: "Triết lý của UNIX là trừu tượng hóa phần cứng thành file. Block special files (nằm trong `/dev`) đại diện cho đĩa cứng. Bạn có thể đọc/ghi trực tiếp vào file `/dev/sda` như đọc một file text bình thường, thực chất là bạn đang đọc/ghi trực tiếp vào sector của ổ cứng.", citation: "Chương 1.4.3: Files (Special Files)." },
+            { category: "Files", q: "Tương tự, 'Character Special Files' (Tập tin đặc biệt ký tự) đại diện cho loại thiết bị nào?", options: ["Ổ đĩa CD-ROM.", "Ổ đĩa cứng SSD.", "Các thiết bị nhập/xuất xử lý theo luồng ký tự tuần tự (ví dụ: máy in, modem, thiết bị terminal/bàn phím).", "Bộ nhớ RAM."], correct: 2, explanation: "Character files dành cho các thiết bị chấp nhận hoặc xuất ra một luồng dữ liệu liên tục không thể đọc ngẫu nhiên khối (như gõ bàn phím, hoặc in ra giấy). Đọc `/dev/tty` thực chất là lấy ký tự người dùng vừa gõ.", citation: "Chương 1.4.3: Files (Special Files)." },
+            { category: "Files", q: "Khi một chương trình gọi hàm `open()` một tập tin thành công, HĐH sẽ trả về cho chương trình một giá trị nhỏ gọi là gì để sử dụng cho các lần đọc/ghi tiếp theo?", options: ["Mật khẩu của file (File Password).", "Kích thước file (File Size).", "Bộ mô tả tập tin (File Descriptor).", "Biểu tượng file (File Icon)."], correct: 2, explanation: "Lệnh `open()` không trả về toàn bộ dữ liệu file. Nó tạo ra một khe cắm trong OS, và trả về một con số nguyên (vd: số 3) gọi là File Descriptor (UNIX) hoặc Handle (Windows). Chương trình sẽ dùng số '3' này làm vé thông hành để gọi `read(3)` hay `write(3)` sau này.", citation: "Chương 1.4.3: Files." },
+            { category: "Files", q: "Trong hệ điều hành UNIX, 'Pipe' (Đường ống) có bản chất là gì?", options: ["Một đường cáp mạng nối 2 máy tính.", "Một dạng Pseudo-file (Tập tin giả) được dùng để truyền luồng dữ liệu (byte stream) nối đầu ra của Tiến trình A thành đầu vào của Tiến trình B.", "Một công cụ nén file.", "Khóa bảo mật thư mục."], correct: 1, explanation: "Khi bạn gõ lệnh `ls | grep txt`, ký tự `|` tạo ra một Pipe. Pipe là một file tạm trong bộ nhớ. Tiến trình `ls` đổ kết quả ghi vào Pipe, và tiến trình `grep` đọc dữ liệu từ Pipe đó. Đây là một cơ chế IPC cực kỳ thanh lịch của UNIX.", citation: "Chương 1.4.3: Files (Pipes)." },
+            { category: "Files", q: "Khái niệm 'Mount' (Gắn kết) hệ thống tệp trong UNIX có tác dụng gì?", options: ["Làm tăng tốc độ đọc đĩa CD.", "Chuyển hệ điều hành sang một đĩa khác.", "Gắn cây thư mục của một thiết bị lưu trữ rời (như USB, CD-ROM) vào một thư mục trống đang có trên cây thư mục chính (gọi là Mount point), giúp truy cập thiết bị rời một cách liền mạch.", "Xóa toàn bộ dữ liệu trên USB."], correct: 2, explanation: "Ở Windows, cắm USB vào nó sẽ hiện ổ `D:` hoặc `E:`. Ở UNIX, hệ thống tệp là một cây duy nhất bắt đầu từ `/`. Khi cắm USB, HĐH sẽ dùng lệnh `mount` để gắn toàn bộ cây thư mục của USB nối vào một nhánh trống (ví dụ `/media/usb`). Người dùng đi vào đó như vào một thư mục bình thường.", citation: "Chương 1.4.3: Files (Mounting)." },
+            { category: "Files", q: "Trong hệ thống bảo vệ file (File protection) 9-bit của UNIX (rwxrwxrwx), 3 nhóm quyền này được cấp cho những ai (theo thứ tự)?", options: ["Chủ sở hữu (Owner) - Nhóm (Group) - Những người khác (Others).", "Hệ điều hành - Phần cứng - Người dùng.", "Root - Admin - Guest.", "Read - Write - Execute."], correct: 0, explanation: "Mỗi file có 9 bit bảo vệ chia làm 3 nhóm: Owner (người tạo ra file), Group (những người cùng nhóm với owner), và Others (bất kỳ ai khác). Mỗi nhóm có 3 bit rwx (Read-Write-Execute). Ví dụ rwxr-xr-- nghĩa là Owner toàn quyền, Group được đọc/chạy, Others chỉ được đọc.", citation: "Chương 1.4.5: Protection." },
+
+            // ================== SECTION 4: SYSTEM CALLS ==================
+            { category: "System Calls", q: "System Call (Lời gọi hệ thống) được định nghĩa là gì?", options: ["Là phần mềm gọi điện thoại cho người dùng.", "Là cơ chế giao tiếp duy nhất cho phép các chương trình không gian người dùng (User space) yêu cầu các dịch vụ (như đọc đĩa, tạo tiến trình) từ Hệ điều hành (Kernel).", "Là tiếng bíp cảnh báo của phần cứng.", "Là lệnh gọi hàm thông thường (Procedure call)."], correct: 1, explanation: "Ứng dụng ở User mode bị giam lỏng, không được quyền chạm vào phần cứng. Nếu muốn đọc file trên đĩa cứng, nó không tự làm được mà phải đệ đơn (System call) nhờ Kernel làm hộ. System Call chính là Giao diện lập trình (API) của HĐH.", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "Lệnh phần cứng nào đặc biệt quan trọng được sử dụng để thực thi quá trình chuyển đổi (Context Switch) từ User Mode sang Kernel Mode khi gọi System Call?", options: ["Lệnh JUMP.", "Lệnh HALT.", "Lệnh TRAP (Bẫy).", "Lệnh ADD."], correct: 2, explanation: "TRAP là một lệnh ngắt phần mềm có chủ đích. Khi gọi hàm `read()`, bên trong thư viện C sẽ có lệnh TRAP. Khi CPU chạy lệnh TRAP, nó lập tức nâng quyền lên Kernel Mode và nhảy thẳng vào đoạn code định sẵn của HĐH ở vùng nhớ hạt nhân.", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "Làm thế nào để HĐH biết được chương trình đang muốn sử dụng dịch vụ (System Call) nào trong hàng trăm dịch vụ có sẵn?", options: ["Chương trình gửi email cho HĐH.", "Trước khi thực hiện lệnh TRAP, chương trình sẽ đặt số định danh của System Call (ví dụ số 3 là read, số 4 là write) vào một thanh ghi cụ thể của CPU.", "HĐH sẽ đoán dựa vào tên chương trình.", "Chương trình sẽ hiển thị một cửa sổ để chọn."], correct: 1, explanation: "Cơ chế như sau: Gọi hàm read(). Thư viện C đẩy tham số vào Stack, nạp số hiệu lệnh (Syscall Number của read) vào thanh ghi (ví dụ eax), rồi gọi lệnh TRAP. HĐH thức dậy ở Kernel, kiểm tra thanh ghi eax, thấy số 3, bèn nhảy tới bảng Tra cứu hệ thống (Syscall table) hàm read() tương ứng để chạy.", citation: "Chương 1.5: System Calls (Hình 1-17)." },
+            { category: "System Calls", q: "Bộ tiêu chuẩn quốc tế nào định nghĩa một tập hợp các Lời gọi hệ thống (API) chuẩn mà các hệ điều hành họ UNIX nên tuân thủ để tương thích mã nguồn?", options: ["ISO 9001.", "IEEE 802.11.", "POSIX (Portable Operating System Interface).", "ASCII."], correct: 2, explanation: "Nếu bạn viết code C gọi `read()`, code đó sẽ biên dịch và chạy đúng trên Linux, macOS, FreeBSD. Tại sao? Vì tất cả các HĐH đó đều cam kết tuân thủ chuẩn POSIX. Chuẩn POSIX quy định chính xác tên hàm, tham số và kết quả trả về của khoảng hơn 100 System calls cơ bản.", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "Điều gì sẽ xảy ra SAU KHI Hệ điều hành xử lý xong một System Call?", options: ["Máy tính khởi động lại.", "HĐH trả kết quả (vào thanh ghi), giảm quyền của CPU từ Kernel Mode trở lại User Mode, và trả luồng điều khiển về lại chương trình của người dùng ngay tại câu lệnh kế tiếp.", "Hệ điều hành tiêu diệt chương trình đó để tiết kiệm RAM.", "HĐH tự động chuyển sang chương trình khác và bỏ rơi chương trình cũ."], correct: 1, explanation: "Khi Kernel làm xong việc (ví dụ đọc xong file), nó gọi lệnh quay lại từ bẫy (Return from Trap). Phần cứng sẽ hạ Mode bit về 1 (User mode), phục hồi thanh ghi, và trả con trỏ lệnh về ngay sau lệnh TRAP để ứng dụng tiếp tục chạy mượt mà như một hàm bình thường.", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "Sự khác biệt cốt lõi nhất giữa việc một chương trình gọi Hàm thông thường (ví dụ hàm toán học `sin(x)`) và gọi một System Call (như `read()`) là gì?", options: ["Hàm thông thường chạy chậm hơn.", "Hàm thông thường chạy hoàn toàn trong User Mode; Lời gọi hệ thống đòi hỏi một lần chuyển đổi sang Kernel Mode thông qua ngắt (Trap).", "Hàm thông thường tốn nhiều điện năng hơn.", "Không có gì khác biệt, chúng giống hệt nhau ở cấp độ phần cứng."], correct: 1, explanation: "Khi bạn gọi `sin(x)`, CPU chỉ đơn giản là JUMP sang địa chỉ chứa đoạn code tính Sin (vẫn ở User mode). Khi gọi `read()`, CPU không thể tự ý JUMP vào Kernel vì bị cấm. Nó phải dùng lệnh TRAP (Bẫy) để cầu cứu HĐH. Chuyển đổi User <-> Kernel mode cực kỳ đắt đỏ về mặt thời gian (overhead).", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "System Call `execve` (thường gọi tắt là exec) trong POSIX/UNIX có nhiệm vụ gì đặc biệt?", options: ["Tạo thêm một tiến trình mới.", "Tiêu diệt tất cả các tiến trình khác.", "Thay thế toàn bộ không gian bộ nhớ (mã lệnh, dữ liệu) của tiến trình hiện tại bằng một chương trình thực thi mới (executable file). Tiến trình cũ biến mất vĩnh viễn.", "Đọc dữ liệu từ đĩa cứng."], correct: 2, explanation: "Hàm `fork()` tạo ra một bản sao hoàn hảo (clone). Nếu chỉ clone thì chẳng làm được việc gì mới. Vì vậy, đứa con sau khi ra đời thường gọi `execve()`. Nó lập tức bị 'tẩy não' hoàn toàn, không gian nhớ bị ghi đè bởi chương trình khác (ví dụ chương trình `ls`).", citation: "Chương 1.5.1: System Calls for Process Management." },
+            { category: "System Calls", q: "Trong lập trình C, khi bạn gọi hàm `printf(...)`, hàm này có phải là một System Call trực tiếp không?", options: ["Có, nó là System Call kinh điển.", "Không, nó là một hàm thư viện chuẩn (Library routine). Bên trong nó sẽ thực hiện định dạng chuỗi rồi cuối cùng mới gọi System Call thực sự là `write`.", "Có, vì nó xuất dữ liệu ra màn hình.", "Không, nó là hàm của phần cứng BIOS."], correct: 1, explanation: "Rất nhiều hàm ta hay dùng thực chất là Hàm đóng gói (Wrapper Functions / Library routines). `printf` sẽ xử lý các tham số `%d`, `%s`, sắp xếp chúng thành một chuỗi mảng byte gọn gàng, và cuối cùng nó mới kích hoạt System call cốt lõi là `write(1, chuoi, do_dai)` để nhờ HĐH in ra màn hình.", citation: "Chương 1.5: System Calls." },
+            { category: "System Calls", q: "System Call `waitpid()` (hoặc wait) thường được tiến trình cha sử dụng trong trường hợp nào?", options: ["Để chờ hệ điều hành giải phóng RAM.", "Để tạm dừng và chờ đợi một tiến trình con của nó kết thúc vòng đời. Nếu không có lệnh này, tiến trình con chết đi sẽ trở thành Zombie.", "Để chờ ổ đĩa quay đủ tốc độ.", "Để chờ mạng kết nối."], correct: 1, explanation: "Khi một tiến trình tạo ra con (`fork`), nó thường gọi `waitpid()` để đi ngủ. Khi tiến trình con chạy xong và gọi lệnh `exit`, HĐH sẽ đánh thức cha dậy và báo: 'Con anh làm việc xong rồi, đây là mã thoát (exit status) của nó'.", citation: "Chương 1.5.1: Process Management." },
+            { category: "System Calls", q: "Tại sao không cho phép các chương trình ứng dụng tự do gọi trực tiếp các đoạn mã bên trong Hệ điều hành bằng lệnh JUMP, mà bắt buộc phải thông qua System Call (TRAP)?", options: ["Vì chương trình không biết địa chỉ của HĐH.", "Vì để bắt lập trình viên phải nhớ các số định danh.", "Để ĐẢM BẢO BẢO MẬT. Việc nhảy bừa bãi vào Kernel sẽ làm hỏng HĐH. TRAP ép buộc chương trình phải đi qua một 'cửa khẩu' duy nhất, nơi HĐH kiểm soát tuyệt đối quyền và tính hợp lệ của tham số trước khi thực hiện.", "Vì lệnh JUMP chạy chậm hơn lệnh TRAP."], correct: 2, explanation: "Bảo vệ hệ thống! Nếu cho phép nhảy trực tiếp, một hacker có thể JUMP bỏ qua đoạn code 'Kiểm tra mật khẩu' và chạy thẳng đoạn code 'Cấp quyền Admin'. Với TRAP, phần cứng ép nhảy vào một điểm duy nhất (entry point). Tại đó OS sẽ soi xét cẩn thận anh muốn làm gì, anh có quyền làm không, rồi mới làm giúp.", citation: "Chương 1.5: System Calls & Protection." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+
+            quizData.forEach((qObj) => {
+                // Check if we need a new section divider
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-zinc-900 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                // Question Block
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${questionCounter}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (CLRS Style):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        answerDiv.classList.add('show');
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 2.4 (CPU Scheduling)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-72 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Chương 2.4: Định thời (40 Câu)</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Khi nào cần định thời?" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">1. Khi nào cần & Tiêu chí</a>
+                    <a href="#section-Định thời cho Batch Systems" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">2. Thuật toán Batch Systems</a>
+                    <a href="#section-Định thời cho Interactive Systems" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">3. Thuật toán Interactive Systems</a>
+                    <a href="#section-Định thời cho Real-time Systems" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">4. Real-time Systems</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Lưu ý:</strong> Click vào menu để nhảy đến chủ đề. Hệ thống tự động chấm điểm và trích xuất sách.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-2">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 2.4: CPU SCHEDULING (ĐỊNH THỜI CPU)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Nghệ thuật phân phát CPU: Từ Xử lý lô, Tương tác đến Thời gian thực (40 Câu)</p>
+                </div>
+                <div id="questions-list" class="space-y-12 mt-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== KHI NÀO CẦN ĐỊNH THỜI? (1-10) ==================
+            { category: "Khi nào cần định thời?", q: "Sự phân biệt giữa 'Độc quyền' (Non-preemptive Scheduling) và 'Không độc quyền' (Preemptive Scheduling) nằm ở điểm cốt lõi nào?", options: ["Số lượng tiến trình chạy cùng lúc.", "Thời gian khởi động của Hệ điều hành.", "Một tiến trình Non-preemptive sẽ ôm CPU chạy cho đến khi nó TỰ NGUYỆN dừng (Blocked hoặc Exit). Còn Preemptive thì HĐH có quyền ép buộc ngắt CPU của nó khi hết thời gian (Quantum).", "Cách tiến trình dùng bộ nhớ RAM."], correct: 2, explanation: "Preemptive (Bị tiếm quyền) là HĐH cài báo thức (Clock Interrupt). Hết giờ là HĐH 'giật' lại CPU để nhường người khác, mặc kệ tiến trình kia đang tính dở. Còn Non-preemptive là sự tự giác: HĐH giao CPU rồi ngồi chờ, chừng nào anh tính xong hoặc anh kẹt đĩa cứng thì anh tự trả CPU lại cho tôi.", citation: "Chương 2.4.1: Introduction to Scheduling (Preemptive vs Non-preemptive)." },
+            { category: "Khi nào cần định thời?", q: "Hệ điều hành BẮT BUỘC phải thực hiện quyết định Định thời (Scheduling Decision) ở 4 thời điểm cụ thể. Thời điểm nào KHÔNG PHẢI là lúc quyết định định thời?", options: ["Khi một tiến trình mới được tạo ra (Creation).", "Khi một tiến trình kết thúc (Exit).", "Khi màn hình chuyển sang chế độ Screensaver (Bảo vệ màn hình).", "Khi một tiến trình đang chạy gọi thao tác I/O và chuyển sang trạng thái Blocked."], correct: 2, explanation: "Các thời điểm vàng để Bộ định thời làm việc: 1. Có đứa mới đẻ (chọn cha hay con chạy trước). 2. Đứa đang chạy chết đi (phải chọn đứa khác bù vào). 3. Đứa đang chạy bị kẹt I/O (chọn đứa khác chạy bù). 4. Có ngắt I/O báo xong việc (xem có nên đá đứa đang chạy để cho đứa vừa xong I/O chạy không).", citation: "Chương 2.4.1: Introduction to Scheduling (When to schedule)." },
+            { category: "Khi nào cần định thời?", q: "Một tiến trình thường luân phiên giữa 2 khoảng thời gian: 'CPU Burst' (Tính toán với CPU) và 'I/O Burst' (Chờ đợi I/O). Trong các thập kỷ qua, xu hướng của CPU Burst thay đổi như thế nào?", options: ["CPU Burst ngày càng dài ra.", "CPU Burst không thay đổi.", "Nhờ CPU ngày càng mạnh, thời gian tính toán (CPU Burst) ngày càng NGHẮN LẠI, trong khi I/O vẫn rất chậm. Điều này khiến đa số chương trình chuyển thành I/O-bound (Thiên về I/O).", "Không dùng CPU Burst nữa."], correct: 2, explanation: "Định luật Moore làm CPU mạnh lên khủng khiếp, nhưng ổ đĩa cơ học (disk) tiến hóa chậm chạp. Kết quả: CPU tính toán rất nhanh (Burst ngắn), sau đó lại phải chờ ổ đĩa mòn mỏi. Việc này ép HĐH phải định thời liên tục.", citation: "Chương 2.4.1: Process Behavior (Hình 2-38)." },
+            { category: "Khi nào cần định thời?", q: "Mỗi loại Hệ thống (Batch, Interactive, Real-time) có một Tiêu chí đánh giá chất lượng Định thời (Scheduling Goals) khác nhau. Tiêu chí quan trọng nhất cho hệ thống BATCH (Xử lý lô / Máy chủ) là gì?", options: ["Response Time (Thời gian phản hồi) cực nhanh.", "Throughput (Thông lượng - Hoàn thành càng nhiều công việc mỗi giờ càng tốt).", "Meeting Deadlines (Tuyệt đối không trễ hạn).", "Có giao diện đẹp."], correct: 1, explanation: "Máy chủ ngân hàng chạy qua đêm không cần trả lời nhanh như chớp. Nó quan tâm đến 'Thông lượng': Trong 8 tiếng ban đêm, mày phải xử lý xong một đống 1 triệu giao dịch. Không ai ngồi trước màn hình bấm nút cả.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+            { category: "Khi nào cần định thời?", q: "Ngược lại, tiêu chí tối thượng cho hệ thống INTERACTIVE (Tương tác / PC / Smartphone) là gì?", options: ["Turnaround Time (Thời gian lưu lại trong hệ thống từ lúc nộp việc đến khi xong).", "Throughput (Thông lượng).", "Response Time (Thời gian phản hồi) - Đảm bảo rằng khi người dùng gõ phím hay di chuột, hệ thống phản ứng ngay lập tức không bị giật lag.", "Tiết kiệm băng thông."], correct: 2, explanation: "Nếu bạn gõ chữ 'A' trên bàn phím mà nửa giây sau chữ 'A' mới hiện ra trên Word, bạn sẽ đập máy tính. Response Time (nhanh) quan trọng hơn Throughput ở PC cá nhân.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+            { category: "Khi nào cần định thời?", q: "Và đối với hệ thống REAL-TIME (Thời gian thực / Robot / Vũ trụ), mục tiêu duy nhất không thể thương lượng là:", options: ["Chạy đồ họa 3D nhanh.", "Meeting Deadlines (Tuyệt đối phải hoàn thành nhiệm vụ đúng thời hạn, trễ 1 mili-giây coi như thảm họa).", "Tiết kiệm RAM nhất có thể.", "Hỗ trợ nhiều người dùng."], correct: 1, explanation: "Hệ thống phanh ABS của ô tô, hay máy thở ở bệnh viện. Khi bạn đạp phanh, HĐH phải kích hoạt lệnh phanh TỐI ĐA trong 50ms. Làm xong trong 51ms thì người chết rồi. Đó là Deadlines.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+            { category: "Khi nào cần định thời?", q: "Đại lượng 'Turnaround Time' (Thời gian quay vòng) trong Batch Systems được định nghĩa là khoảng thời gian nào?", options: ["Khoảng thời gian HĐH rảnh rỗi.", "Khoảng thời gian từ lúc chương trình CHÍNH THỨC NỘP (Submit) vào hệ thống cho đến khi nó IN RA KẾT QUẢ CUỐI CÙNG (Kết thúc).", "Khoảng thời gian chạy CPU thực sự của tiến trình.", "Thời gian nạp hệ điều hành."], correct: 1, explanation: "Giống như đi nộp hồ sơ xin visa. Thời gian quay vòng = Thời gian đứng xếp hàng ngoài cổng + Thời gian làm việc với cửa sổ A + Thời gian ngồi đợi gọi tên lần 2 + Thời gian nhận kết quả. Càng ngắn càng tốt.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+            { category: "Khi nào cần định thời?", q: "Một nguyên tắc 'Công bằng' (Fairness) trong định thời HĐH mang ý nghĩa gì?", options: ["Chia đều RAM cho tất cả mọi người.", "Cấp cho mỗi tiến trình một phần CPU một cách bình đẳng, không ai bị thiên vị trừ khi có mức ưu tiên rõ ràng.", "Phải chạy mọi phần mềm cùng tốc độ.", "HĐH tự động khóa người dùng dùng nhiều CPU."], correct: 1, explanation: "Công bằng nghĩa là nếu có 3 tiến trình ưu tiên như nhau, HĐH phải đảm bảo mỗi anh được hưởng khoảng 1/3 sức mạnh CPU. Không để 1 anh dùng 99% còn 2 anh kia chết đói.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+            { category: "Khi nào cần định thời?", q: "Thuật toán Định thời (Scheduler) thường không cần dùng đến tính năng Preemptive (Tước đoạt) trong môi trường nào?", options: ["Hệ thống Máy tính cá nhân (PC).", "Hệ thống Thời gian thực.", "Hệ thống Xử lý lô (Batch Systems), vì các tiến trình không cần phản hồi nhanh cho người dùng, cứ để nó chạy đến khi xong hoặc kẹt I/O thì mới thay.", "Hệ thống Smartphone."], correct: 2, explanation: "Việc HĐH giật CPU liên tục (Preemptive) tốn rất nhiều phí chuyển ngữ cảnh (Context switch overhead). Ở Batch system, ta cần Thông lượng tối đa, nên cứ thả cho nó chạy 1 mạch (Non-preemptive) lại là cách tối ưu nhất.", citation: "Chương 2.4.3: Scheduling in Batch Systems." },
+            { category: "Khi nào cần định thời?", q: "Tính năng 'Proportionality' (Tính tỷ lệ thuận) trong Interactive Systems có nghĩa là gì?", options: ["Kích thước cửa sổ tự động thu phóng.", "Hệ thống phải đáp ứng đúng với 'kỳ vọng' của người dùng: Việc đơn giản (như đóng cửa sổ) phải phản hồi tức thì, việc nặng (như render video) thì HĐH có quyền cho chạy chậm mà người dùng vẫn vui vẻ chấp nhận.", "Số luồng tỷ lệ thuận với số RAM.", "CPU chạy tỷ lệ thuận với dòng điện."], correct: 1, explanation: "Nếu bạn bấm dấu X đóng file Word mà nó đơ 10 giây, bạn sẽ phát điên. Nhưng nếu bạn xuất 1 video 4K dài 2 tiếng, nó báo 'Đang xuất 30 phút', bạn vẫn thấy OK. HĐH ưu tiên tài nguyên cho việc nhẹ chạy trước để thỏa mãn tâm lý này.", citation: "Chương 2.4.2: Scheduling Algorithm Goals." },
+
+            // ================== ĐỊNH THỜI CHO BATCH SYSTEMS (11-20) ==================
+            { category: "Định thời cho Batch Systems", q: "Thuật toán định thời ĐƠN GIẢN NHẤT dành cho Batch Systems là gì?", options: ["Round Robin.", "FCFS - First-Come, First-Served (Đến trước, Phục vụ trước).", "Priority Scheduling.", "Shortest Remaining Time First."], correct: 1, explanation: "Nó dùng một cái Hàng đợi (Queue) duy nhất. HĐH lấy Job ở đầu hàng, giao toàn quyền CPU (Non-preemptive) cho nó chạy đến khi xong. Xong lại lấy đứa tiếp theo. Y hệt xếp hàng mua vé phim.", citation: "Chương 2.4.3: First-Come, First-Served." },
+            { category: "Định thời cho Batch Systems", q: "Nhược điểm trí mạng của thuật toán FCFS (First-Come, First-Served) là gì?", options: ["Tốn quá nhiều RAM.", "Gây ra hiệu ứng 'Đoàn tàu' (Convoy Effect). Một tiến trình CPU-bound cực nặng (chạy 1 tiếng) nếu đứng đầu hàng sẽ block cả chục tiến trình I/O-bound nhỏ bé, nhẹ cân (chỉ chạy 1 giây) đứng phía sau, làm giảm Thông lượng trầm trọng.", "Nó bị hỏng bởi virus.", "Nó liên tục ngắt CPU."], correct: 1, explanation: "Tiến trình A to xác ôm CPU 100 giây. Tiến trình B, C, D chỉ cần CPU 1 mili-giây để gọi hàm lưu ổ đĩa, nhưng cũng phải chờ A ròng rã 100 giây. Hiệu suất của I/O devices (đĩa cứng) giảm thảm hại vì không có dữ liệu để chạy.", citation: "Chương 2.4.3: First-Come, First-Served." },
+            { category: "Định thời cho Batch Systems", q: "Để khắc phục lỗi của FCFS, người ta dùng thuật toán SJF (Shortest Job First - Việc ngắn nhất làm trước). Theo toán học, điểm mạnh tuyệt đối của SJF là gì?", options: ["Nó được chứng minh là TỐI ƯU NHẤT để giảm thiểu Thời gian quay vòng trung bình (Average Turnaround Time).", "Nó loại bỏ hoàn toàn sự cố phần cứng.", "Nó giúp tạo ra giao diện 3D mượt mà.", "Nó tự động mã hóa mật khẩu."], correct: 0, explanation: "Nếu bạn có 4 Job thời gian là (A:8, B:4, C:4, D:4). Nếu xếp FCFS (A,B,C,D), thời gian quay vòng lần lượt là 8, 12, 16, 20. Trung bình là 14. Nhưng nếu xếp SJF (B,C,D,A), thời gian quay vòng là 4, 8, 12, 20. Trung bình giảm xuống chỉ còn 11!", citation: "Chương 2.4.3: Shortest Job First." },
+            { category: "Định thời cho Batch Systems", q: "Điều kiện BẮT BUỘC để hệ điều hành có thể sử dụng thuật toán SJF (Shortest Job First) là gì?", options: ["Phải có 2 CPU trở lên.", "Phải tắt mạng Internet.", "Hệ điều hành PHẢI BIẾT TRƯỚC một cách chính xác thời gian chạy của các Job trước khi nạp chúng. (Điều kiện này rất khó ở thực tế, thường chỉ đúng trong Batch systems).", "Phải sử dụng luồng KLT."], correct: 2, explanation: "Bạn không thể xếp 'Việc ngắn trước' nếu bạn không biết việc đó dài hay ngắn. Trong hệ thống Batch ngày xưa, lập trình viên nộp thẻ đục lỗ kèm tờ giấy khai báo 'Chương trình tui dự kiến chạy 5 phút'. Dựa vào đó OS mới sắp xếp được.", citation: "Chương 2.4.3: Shortest Job First." },
+            { category: "Định thời cho Batch Systems", q: "Phiên bản CÓ TƯỚC ĐOẠT (Preemptive) của SJF được gọi là gì?", options: ["Round Robin.", "SRTF - Shortest Remaining Time First (Thời gian còn lại ngắn nhất).", "Multilevel Feedback Queue.", "Fair-Share Scheduling."], correct: 1, explanation: "Trong SRTF, HĐH luôn chọn đứa có 'thời gian còn lại' ít nhất. Giả sử A đang chạy, nó cần 10 giây nữa để xong. Tự nhiên B (mới nộp vào) chỉ cần 2 giây để chạy. Vì SRTF là Preemptive, HĐH sẽ đá A ra, đưa B vào chạy xong trong 2 giây rồi mới trả lại cho A.", citation: "Chương 2.4.3: Shortest Remaining Time Next." },
+            { category: "Định thời cho Batch Systems", q: "Nhược điểm lớn của Thuật toán SJF và SRTF là hiện tượng 'Starvation' (Chết đói). Nó xảy ra khi nào?", options: ["Khi thiếu RAM.", "Khi các Job có thời gian NGẮN cứ liên tục nộp vào hệ thống nối đuôi nhau. Những Job NẶNG (thời gian dài) sẽ bị dạt ra cuối hàng và KHÔNG BAO GIỜ đến lượt chạy.", "Khi CPU quá nóng.", "Khi HĐH lỗi driver."], correct: 1, explanation: "Luôn ưu tiên kẻ làm việc nhanh thì kẻ làm việc chậm sẽ chết đói. Nếu 1 tiến trình dài 10 tiếng đứng xếp hàng, và cứ mỗi phút lại có 10 tiến trình 1-giây bay vào, thì tiến trình 10 tiếng kia sẽ vĩnh viễn không được gọi tên.", citation: "Chương 2.4.3: Starvation in SJF." },
+            { category: "Định thời cho Batch Systems", q: "Trong Batch systems với nhiều thiết bị ngoại vi, một Job nặng I/O (chờ ổ đĩa nhiều) sẽ có 'CPU Burst' như thế nào?", options: ["Không có CPU Burst.", "Rất RẤT DÀI (chiếm CPU liên tục).", "Rất NGẮN. Nó chỉ chạy CPU một xíu rồi lập tức Blocked để nhường CPU.", "Tốc độ ánh sáng."], correct: 2, explanation: "Một Job ghi dữ liệu ra đĩa liên tục: Nó nạp 1 byte vào RAM (CPU tính, tốn 0.1ms), nó ra lệnh ghi đĩa (Blocked, tốn 10ms). Vậy CPU Burst của nó cực ngắn. HĐH khôn ngoan sẽ dùng SRTF để ưu tiên Job I/O này, giữ cho ổ đĩa chạy liên tục, tối đa hóa hiệu suất phần cứng.", citation: "Chương 2.4.3: I/O-bound jobs behavior." },
+
+            // ================== ĐỊNH THỜI CHO INTERACTIVE SYSTEMS (21-30) ==================
+            { category: "Định thời cho Interactive Systems", q: "Thuật toán Định thời KINH ĐIỂN, cổ xưa nhất, đơn giản nhất, công bằng nhất và được sử dụng rộng rãi nhất cho hệ thống Interactive (Tương tác / PC) là gì?", options: ["SJF.", "Round Robin (Xoay vòng).", "Lottery Scheduling.", "First-Come First-Served."], correct: 1, explanation: "Mỗi tiến trình được cấp một khe thời gian nhỏ (Quantum / Time Slice), thường là 20-50ms. A chạy hết 20ms, bị HĐH tước quyền (Preemptive), quăng A ra cuối hàng. Lên B chạy 20ms. C chạy 20ms. Rồi lại quay về A. Cực kỳ công bằng.", citation: "Chương 2.4.4: Round-Robin Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Vấn đề quan trọng nhất khi thiết kế thuật toán Round Robin là gì?", options: ["Cách đặt tên cho tiến trình.", "Độ lớn của 'Quantum' (Lát cắt thời gian). Cắt quá NGẮN thì tốn quá nhiều CPU vào việc Context Switch. Cắt quá DÀI thì máy tính giật lag, thời gian phản hồi (Response time) kém.", "Giá tiền của CPU.", "Độ phân giải màn hình."], correct: 1, explanation: "Ví dụ Context Switch mất 1ms. Nếu Quantum = 4ms, thì bạn lãng phí 20% sức mạnh CPU chỉ để nhảy qua nhảy lại. Nếu Quantum = 1000ms (1 giây), thì khi bạn click chuột ở tiến trình 10, bạn phải chờ 10 giây máy tính mới phản ứng (cực kỳ tệ). Quantum 20-50ms là cân bằng hợp lý.", citation: "Chương 2.4.4: Round-Robin Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Thuật toán 'Định thời theo độ ưu tiên' (Priority Scheduling) hoạt động dựa trên nguyên lý nào?", options: ["Ai đến trước chạy trước.", "Mỗi tiến trình được gán một con số Ưu tiên (Priority). Bộ định thời luôn ưu tiên nạp đứa có số Ưu tiên CAO NHẤT vào CPU trước. Ai ưu tiên thấp hơn phải đợi.", "Chạy ngẫu nhiên.", "Tiến trình nào nhẹ nhất chạy trước."], correct: 1, explanation: "Ở Linux, `root` có thể set mức ưu tiên bằng lệnh `nice`. Tiến trình daemon quan trọng ở nền ưu tiên cao, tiến trình gửi mail rác ưu tiên thấp. Round-Robin chỉ dùng cho những đứa có CÙNG cấp ưu tiên.", citation: "Chương 2.4.4: Priority Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Để chống lại hiện tượng 'Starvation' (Chết đói) trong Thuật toán Ưu tiên, các HĐH hiện đại sử dụng thủ thuật gì?", options: ["Xóa tiến trình có ưu tiên cao.", "Aging (Lão hóa). Mỗi khi CPU chạy 1 chu kỳ, HĐH sẽ LÀM GIẢM điểm ưu tiên của tiến trình đang chạy (hoặc TĂNG điểm ưu tiên của đứa đang xếp hàng). Tới một lúc nào đó ưu tiên sẽ cân bằng.", "Mua thêm RAM.", "Tắt hệ điều hành."], correct: 1, explanation: "Aging là giải pháp tuyệt vời. A (ưu tiên cao) chạy mãi, HĐH cứ 10ms lại trừ đi 1 điểm của A. Đến một lúc, điểm của A tụt xuống thấp hơn cả điểm của B (ưu tiên thấp). B lập tức được chiếm CPU.", citation: "Chương 2.4.4: Priority Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Khái niệm 'Multiple Queues' (Hàng đợi đa cấp - CTSS) được sinh ra để làm gì?", options: ["Lưu 4 file cùng lúc.", "Phân nhóm ưu tiên: HĐH tạo ra nhiều Hàng đợi (Class 4 ưu tiên cao nhất, Class 3, Class 2...). Scheduler quét từ hàng 4, hàng 4 rỗng mới quét xuống hàng 3. Nếu đứa ở hàng 4 dùng hết Quantum, nó bị giáng cấp đẩy xuống hàng 3.", "Để in nhiều tài liệu.", "Để kết nối nhiều máy ảo."], correct: 1, explanation: "Thay vì tính toán mệt mỏi, CTSS (MIT) dùng nhiều Queue. Job vừa vào được nhét lên VIP (Class 4) với Quantum cực ngắn để ưu tiên phản hồi tức thì (Interactive). Nếu nó thực chất là Job tính toán nặng, nó dùng hết Quantum, HĐH giáng cấp nó xuống Class thấp hơn với Quantum dài hơn. Rất thông minh!", citation: "Chương 2.4.4: Multiple Queues." },
+            { category: "Định thời cho Interactive Systems", q: "Vấn đề của Round Robin là nó 'Bất công' với các tiến trình I/O-bound (Tương tác). Tại sao?", options: ["Vì tiến trình I/O không thích Round Robin.", "Giả sử Quantum = 50ms. Anh CPU-bound dùng trọn vẹn 50ms. Anh I/O-bound chạy 2ms rồi phải xin ổ đĩa và Block. Khi có dữ liệu, anh ta phải đứng xếp hàng lại từ đầu và mất oan 48ms của mình.", "Vì Round Robin xóa RAM.", "Vì I/O-bound quá nặng."], correct: 1, explanation: "Điều này dẫn đến tiến trình tính toán chiếm 99% CPU, còn tiến trình gõ phím I/O mòn mỏi. Giải pháp: Ở hàng đợi Ready, cấp cho tiến trình I/O mức ưu tiên cao hơn, hoặc đền bù cho nó số mili-giây nó chưa dùng hết.", citation: "Chương 2.4.4: Shortest Process Next (Predicting behavior)." },
+            { category: "Định thời cho Interactive Systems", q: "Để áp dụng SJF (Việc ngắn làm trước) cho hệ Interactive (không biết trước độ dài việc), HĐH sử dụng một kỹ thuật dự đoán (Heuristic). Công thức dự đoán thời gian là gì?", options: ["Đoán bừa ngẫu nhiên.", "Sử dụng công thức Trung bình trọng số mũ (Exponential Moving Average): $T_0 = a T_0 + (1-a) T_1$. Đoán thời gian dựa trên các hành vi thực tế của tiến trình trong quá khứ.", "Tính bằng RAM.", "Lấy kích thước file .exe chia 2."], correct: 1, explanation: "Nếu một tiến trình 10 lần trước đều gọi đĩa cứng sau 5ms, thì khả năng cao lần thứ 11 nó cũng chạy 5ms. Bằng công thức Aging trọng số ($a = 1/2$), HĐH 'học' được hành vi của tiến trình và ưu tiên cho các tiến trình chuyên gọi I/O (chạy ngắn) để tối đa Response Time.", citation: "Chương 2.4.4: Shortest Process Next." },
+            { category: "Định thời cho Interactive Systems", q: "Thuật toán 'Guaranteed Scheduling' (Định thời Đảm bảo) thực hiện việc gì để cực kỳ công bằng?", options: ["Ai cũng bị HĐH khóa.", "Đưa ra lời hứa: 'Nếu có n người dùng đăng nhập, mỗi người sẽ nhận được CHÍNH XÁC $1/n$ công suất CPU'. HĐH liên tục đo lường và ưu tiên những người dùng đang bị xài hụt 'chỉ tiêu' so với lời hứa.", "Giao diện đồ họa tuyệt đối đẹp.", "Đảm bảo không bao giờ bị mất mạng."], correct: 1, explanation: "HĐH theo dõi tỷ lệ `Thời gian thực sự đã chạy / Thời gian được hứa hẹn`. Ai có tỷ lệ này NHỎ NHẤT (bị thiệt thòi nhất) sẽ được HĐH ưu ái xếp lên chạy trước để kéo tỷ lệ đó về 1.0.", citation: "Chương 2.4.4: Guaranteed Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Thuật toán 'Lottery Scheduling' (Xổ số) là một sáng tạo độc đáo. Nó hoạt động như thế nào?", options: ["CPU xoay vòng như vòng quay may mắn.", "Hệ điều hành phát các 'Vé số' cho tiến trình. Tiến trình quan trọng (VD: Video) được phát 100 vé, tiến trình rác được 10 vé. Cứ mỗi lần đổi CPU, HĐH quay xổ số 1 lần. Ai trúng giải được chạy.", "Cấm đánh bạc trên máy tính.", "Mua vé bằng thẻ tín dụng."], correct: 1, explanation: "Cực kỳ đơn giản nhưng mạnh mẽ. Không cần Aging phức tạp. Đứa có 100 vé có TỶ LỆ TRÚNG (chiếm CPU) 100/110 = 90%. Đứa 10 vé tỷ lệ trúng 9%. Nó đảm bảo sự phân chia tài nguyên gần như chính xác tuyệt đối theo trọng số.", citation: "Chương 2.4.4: Lottery Scheduling." },
+            { category: "Định thời cho Interactive Systems", q: "Vấn đề 'Định thời công bằng' (Fair-Share Scheduling) bảo vệ quyền lợi của ai?", options: ["Quyền lợi của ổ cứng.", "Bảo vệ Quyền lợi của NGƯỜI DÙNG thay vì Tiến trình. Nếu User A có 9 tiến trình, User B có 1 tiến trình. HĐH sẽ không cho A chiếm 90% CPU, mà chia A 50% và B 50%.", "Quyền lợi của HĐH.", "Quyền lợi của Bill Gates."], correct: 1, explanation: "Round Robin mù quáng sẽ cấp CPU cho 10 tiến trình đều đặn. Kẻ xấu có thể tạo ra hàng ngàn tiến trình rác để 'hút' sạch CPU của hệ thống. Fair-Share nhóm các tiến trình theo Người Dùng (Owner), bóp nghẹt anh nào tạo quá nhiều tiến trình ảo.", citation: "Chương 2.4.4: Fair-Share Scheduling." },
+
+            // ================== ĐỊNH THỜI CHO REAL-TIME SYSTEMS (31-40) ==================
+            { category: "Real-time Systems", q: "Trong hệ thống Real-time (Thời gian thực), sự khác biệt giữa 'Hard real-time' và 'Soft real-time' là gì?", options: ["Hard dùng đĩa cứng, Soft dùng đĩa mềm.", "Hard: Trễ deadline là thảm họa (Máy bay rơi, hỏng phanh ABS). Soft: Trễ deadline chỉ làm giảm trải nghiệm (Lag video, nhiễu âm thanh).", "Hard viết bằng C++, Soft viết bằng Python.", "Không có gì khác biệt."], correct: 1, explanation: "Định thời Real-time không quan tâm công bằng hay thông lượng. Nó quan tâm đến DEADLINE (Hạn chót). Hard-real time ép hệ thống phải được thiết kế sao cho 100% nhiệm vụ quan trọng không bao giờ bị trễ.", citation: "Chương 2.4.5: Scheduling in Real-Time Systems." },
+            { category: "Real-time Systems", q: "Các sự kiện trong hệ thống Thời gian thực (như cảm biến đọc nhiệt độ) thường có chu kỳ. Nếu có $m$ sự kiện chu kỳ với tần số $f_i$ (giây) và thời gian xử lý $c_i$, điều kiện TOÁN HỌC nào quyết định hệ thống CÓ THỂ LẬP LỊCH ĐƯỢC (Schedulable)?", options: ["$c_1 + c_2 = f_1 + f_2$", "$\sum_{i=1}^{m} \frac{c_i}{f_i} \le 1$", "CPU có 8 cores.", "$f_i \times c_i = 1$"], correct: 1, explanation: "Tổng của (Thời gian xử lý / Chu kỳ) của tất cả các cảm biến KHÔNG ĐƯỢC VƯỢT QUÁ 1 (100% sức mạnh CPU). Ví dụ: Camera 50ms xử lý xong trong 30ms (Tốn 30/50 = 60%). Cảm biến khói 100ms tốn 20ms (Tốn 20/100 = 20%). Tổng 80% <= 1, CPU gánh được.", citation: "Chương 2.4.5: Schedulable systems." },
+            { category: "Real-time Systems", q: "Thuật toán Định thời tĩnh nổi tiếng nhất cho Hệ thống thời gian thực có tính chu kỳ là RMS (Rate Monotonic Scheduling). Nguyên tắc ưu tiên của nó là gì?", options: ["Sự kiện nào nguy hiểm ưu tiên cao.", "Nhiệm vụ có CHU KỲ (Period) CÀNG NGẮN (tần suất lặp lại càng nhanh) thì điểm ƯU TIÊN càng CAO.", "Tiến trình nào xin ít RAM ưu tiên cao.", "Nhiệm vụ chu kỳ dài ưu tiên cao."], correct: 1, explanation: "Thuật toán tĩnh: Cảm biến gia tốc xe quay vòng 20ms/lần -> Rate nhanh -> Ưu tiên số 1. Cảm biến mức xăng quay vòng 100ms/lần -> Ưu tiên 2. HĐH setup các mức này ngay từ lúc compile hệ thống, không thay đổi lúc chạy.", citation: "Chương 2.4.5: Rate Monotonic Scheduling (Extra knowledge)." },
+            { category: "Real-time Systems", q: "Thuật toán Định thời ĐỘNG cực mạnh cho Real-time là EDF (Earliest Deadline First). Nó ưu tiên cho ai?", options: ["Ưu tiên Job đến trước.", "Ưu tiên Job nào có DEADLINE GẦN NHẤT (Sắp trễ hạn nhất). Bất chấp chu kỳ của nó là bao nhiêu, nó sẽ được đẩy lên chiếm CPU ngay lập tức.", "Ưu tiên Job của nhân HĐH.", "Ưu tiên Job có tên bắt đầu bằng chữ A."], correct: 1, explanation: "Nếu HĐH thấy Nhiệm vụ A còn 5ms nữa hết hạn, Nhiệm vụ B còn 10ms. HĐH lập tức xếp A chạy trước. Đây là thuật toán tối ưu động: Nếu một tập hợp sự kiện có thể lập lịch được (Tổng $\le 1$), EDF CHẮC CHẮN sẽ sắp xếp thành công mà không trễ ai.", citation: "Chương 2.4.5: Earliest Deadline First." },
+            { category: "Real-time Systems", q: "Trong việc Phân bổ lại Luồng (Thread Scheduling), nếu dùng User-Level Threads (ULT), quá trình định thời diễn ra ở đâu?", options: ["Ở BIOS.", "Không ai định thời.", "Quá trình định thời diễn ra Ở TRONG KHÔNG GIAN NGƯỜI DÙNG (User Space). Trình định thời nội bộ của Thư viện luồng tự quyết định cho luồng nào chạy, HĐH không tham gia.", "Ở máy chủ trung tâm."], correct: 2, explanation: "Kernel chỉ ném cho Tiến trình một Quantum 50ms. Bên trong, Thư viện luồng tự do tạo ra thuật toán (như Round Robin) để chia 50ms đó cho 4 luồng của nó. Cực kỳ nhanh vì không cần TRAP.", citation: "Chương 2.4.6: Policy versus Mechanism (Thread Scheduling)." },
+            { category: "Real-time Systems", q: "Nếu dùng Kernel-Level Threads (KLT), bộ định thời (Scheduler) của HĐH có nhận thức được các luồng không?", options: ["HĐH mù tịt.", "CÓ. Kernel lưu Bảng luồng, nó sẽ ném thẳng các luồng lên cạnh tranh nhau trên CPU (Đặc biệt trên hệ đa nhân). Việc chuyển đổi luồng buộc phải tốn một chi phí Context Switch của HĐH.", "Chỉ nhận thức được qua mạng.", "Có, nhưng HĐH ghét KLT."], correct: 1, explanation: "Đây là điểm cốt tử khác biệt giữa KLT và ULT. KLT thì Kernel xếp lịch. Nếu Thread 1 của Process A chạy hết giờ, Kernel có thể gọi Thread 2 của Process B vào chạy. Kernel toàn quyền sinh sát.", citation: "Chương 2.4.6: Thread Scheduling." },
+            { category: "Real-time Systems", q: "Nguyên tắc thiết kế OS kinh điển: 'Tách biệt giữa Chính sách (Policy) và Cơ chế (Mechanism)'. Nghĩa là gì trong Định thời?", options: ["Tách bàn phím và chuột.", "CƠ CHẾ là cách HĐH cất/nạp thanh ghi. CHÍNH SÁCH là thuật toán quyết định ai chạy (VD: Round Robin, User tự quyết ưu tiên). Kernel cung cấp Cơ chế mạnh mẽ, nhưng đẩy Chính sách ra cho Người dùng cấu hình.", "Hệ điều hành bị chia làm 2 nửa.", "Tách RAM và Đĩa."], correct: 1, explanation: "Ví dụ: HĐH cung cấp lệnh (Cơ chế) tăng/giảm ưu tiên. Còn Tiến trình cha sẽ tự quyết định Chính sách: Con số 1 quan trọng, ta cấp ưu tiên 10. Con số 2 làm nền, ta cấp ưu tiên 0. Kernel chỉ việc làm theo lệnh của Cha, không cần cứng nhắc áp đặt từ đầu.", citation: "Chương 2.4.6: Policy versus Mechanism." },
+            { category: "Real-time Systems", q: "Khi một HĐH gặp vấn đề quá tải CPU (Thrashing), tiến trình nào cũng muốn chạy, hậu quả là gì?", options: ["Tiết kiệm điện.", "Máy tính bị đóng băng hoàn toàn. HĐH dành 100% sức lực chỉ để CẤT/NẠP (Context Switch) liên tục giữa các tiến trình mà KHÔNG MỘT CÂU LỆNH HỮU ÍCH nào của User được xử lý.", "Màn hình bị hỏng.", "Virus hoạt động."], correct: 1, explanation: "Nếu RAM có 1000 tiến trình, Quantum rất ngắn. Vừa nạp vào CPU chưa kịp làm gì đã bị giật CPU đưa cho đứa khác. HĐH tự chôn mình trong Overhead của Context Switch. Quá tải!", citation: "Chương 2.4.1: Introduction (Cost of Context Switch)." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+
+            quizData.forEach((qObj) => {
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-zinc-900 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${questionCounter}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (CLRS Style):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>
+-

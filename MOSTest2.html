@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Đề Tổng Hợp Số 2 (Khác hoàn toàn Đề 1)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        
+        .calc-step { background: #fff; padding: 12px; border-left: 3px solid #000; margin: 10px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.88em; line-height: 1.5; }
+        code { font-family: 'JetBrains Mono', monospace; background-color: #e4e4e7; padding: 2px 5px; border-radius: 4px; font-size: 0.88em; }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-zinc-900 text-white flex items-center justify-center font-bold font-mono">OS</div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-zinc-900 leading-none">Đề Thi Tổng Hợp Số 2</h1>
+                    <p class="text-xs text-zinc-500 mt-1">Nâng cao Chương 1 & Chương 2 (Tanenbaum)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="score-display" class="font-mono font-bold text-zinc-700 bg-zinc-100 px-3 py-1 rounded">Điểm: 0/30</span>
+                <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-print mr-2"></i> In / Lưu PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-72 flex-shrink-0 no-print">
+            <div class="sticky top-24 bg-white p-5 border border-zinc-200 rounded-lg shadow-sm">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Cấu trúc Đề số 2</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Chương 1: Kiến trúc & Phần cứng Nâng cao" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">1. Kiến trúc & Phần cứng (7 câu)</a>
+                    <a href="#section-Chương 2: Quản lý Tiến trình Nâng cao" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">2. Tiến trình & Luồng Nâng cao (6 câu)</a>
+                    <a href="#section-Chương 2: Đồng bộ & Bài toán Cổ điển" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">3. IPC & Đồng bộ Nâng cao (6 câu)</a>
+                    <a href="#section-Chương 2: Định thời & Real-Time" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4. Định thời Lý thuyết (5 câu)</a>
+                    <a href="#section-Bài tập Tính toán Tự luận Nâng cao" class="text-sm font-bold text-blue-600 hover:text-blue-800 py-1.5 transition-colors">5. Bài tập Tính toán Tự luận (6 câu)</a>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12 rounded-lg shadow-sm">
+                <div id="questions-list" class="space-y-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== PHẦN 1: CHƯƠNG 1 (7 Câu) ==================
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Trong thế hệ máy tính thứ hai (1955-1965), sự xuất hiện của linh kiện nào đã thay thế hoàn toàn bóng đèn chân không, giúp giảm kích thước và tăng độ tin cậy?",
+                options: ["Mạch tích hợp (Integrated Circuit - IC)", "Bóng bán dẫn (Transistor)", "Vi xử lý siêu lớn (VLSI)", "Ống chân không siêu nhỏ"],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Thế hệ thứ hai (1955-1965) đánh dấu cuộc cách mạng thay thế bóng đèn chân không bằng Transistor do phòng thí nghiệm Bell phát minh.<br><br><b>2. Phân tích & Dân dã:</b> Bóng đèn chân không cực kỳ nóng, tốn điện và hay cháy bóng. Transistor nhỏ xíu, chạy mát và bền bỉ hơn gấp trăm lần, giúp máy tính chuyển từ dạng lò sưởi khổng lồ sang các thương mại như IBM 7094.",
+                citation: "Chương 1.2.2: The Second Generation (1955-1965)."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Mục đích chính của thanh ghi cơ sở (Base register) và thanh ghi giới hạn (Limit register) do phần cứng cung cấp là gì?",
+                options: ["Tăng tốc độ truy xuất lệnh của CPU lên 200%.", "Bảo vệ bộ nhớ, đảm bảo một tiến trình ở User mode chỉ được phép truy cập trong phạm vi phân vùng RAM được cấp phát hợp pháp.", "Lưu trữ địa chỉ của các thiết bị ngoại vi I/O qua cổng USB.", "Hỗ trợ nhân bản tiến trình con (fork)."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Cặp thanh ghi Base và Limit lưu trữ địa chỉ bắt đầu và kích thước vùng nhớ hợp pháp của một tiến trình, giúp phần cứng kiểm tra lỗi truy xuất bộ nhớ (Memory Protection).<br><br><b>2. Phân tích & Dân dã:</b> Giống như bạn thuê căn hộ chung cư (phân vùng RAM). Base là số nhà bắt đầu, Limit là diện tích căn hộ. Cố tình đi sang phòng nhà bên cạnh sẽ bị hệ thống cảm biến khóa cửa (phát sinh ngắt Trap ngay lập tức).",
+                citation: "Chương 1.3.1: Memory Protection."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Trong kiến trúc hệ điều hành, cấu trúc Hệ thống phân lớp (Layered System) nổi tiếng với hệ điều hành THE có đặc điểm kỹ thuật gì?",
+                options: ["Các lớp được sắp xếp phân cấp từ thấp đến cao (Lớp 0 là phần cứng, Lớp cao nhất là giao diện người dùng), mỗi lớp chỉ được gọi các dịch vụ của lớp thấp hơn nó.", "Toàn bộ mã nguồn nằm chung một không gian nhớ duy nhất không có giới hạn.", "Tất cả các driver thiết bị chạy ngoài không gian User mode.", "Chỉ sử dụng cơ chế truyền thông điệp không đồng bộ."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Hệ thống phân lớp chia HĐH thành các tầng module độc lập theo chiều dọc. Lớp N chỉ được phụ thuộc và gọi hàm của lớp N-1, giúp việc kiểm thử và gỡ lỗi từng tầng cực kỳ dễ dàng.<br><br><b>2. Phân tích & Dân dã:</b> Giống như cấu trúc quân đội: Lính cấp dưới chỉ nhận lệnh từ cấp trên trực tiếp, không được vượt cấp. Lớp 2 lỗi thì sửa lớp 2 mà không sợ làm sập lớp 5.",
+                citation: "Chương 1.6.2: Layered Systems."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Lời gọi hệ thống (System Call) thực hiện hành động chuyển đổi quyền thực thi từ User mode sang Kernel mode thông qua cơ chế nào?",
+                options: ["Gọi hàm trực tiếp bằng từ khóa function call trong C.", "Sử dụng lệnh ngắt phần mềm (Software Interrupt / Trap / syscall instruction) để kích hoạt chuyển đổi Mode bit.", "Rút cáp nguồn phần cứng máy tính.", "Thay đổi giá trị của thanh ghi Program Counter thành 0."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Ứng dụng không thể gọi trực tiếp hàm của Kernel vì bị chặn bởi Mode bit. Do đó, nó phải dùng lệnh ngắt mềm (Trap) để chuyển quyền kiểm soát cho Kernel.<br><br><b>2. Phân tích & Dân dã:</b> Giống như nhân viên muốn gặp Giám đốc thì phải bấm chuông báo động đặc biệt ở phòng bảo vệ, chứ không được tự ý xông vào phòng họp cấp cao.",
+                citation: "Chương 1.4: System Calls."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Mô hình Máy ảo (Virtual Machines - ví dụ VM/370) mang lại ưu điểm vượt trội nào trong thiết kế hệ thống?",
+                options: ["Loại bỏ hoàn toàn sự cần thiết phải có ổ đĩa cứng.", "Cho phép chạy đồng thời nhiều hệ điều hành khác nhau hoàn toàn độc lập trên cùng một phần cứng vật lý duy nhất với sự cô lập tuyệt đối.", "Tăng tốc độ xử lý đồ họa 3D lên gấp nhiều lần.", "Làm cho kích thước mã nguồn của nhân HĐH nhỏ hơn 10 dòng lệnh."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Hypervisor ảo hóa toàn bộ phần cứng bên dưới, tạo ra các bản sao phần cứng ảo độc lập cho phép nhiều hệ điều hành khác nhau chạy song song.<br><br><b>2. Phân tích & Dân dã:</b> Giống như việc bạn dùng phần mềm giả lập Android hoặc cài Windows song song trên MacBook. Hệ điều hành ảo tưởng mình là chủ nhân duy nhất, nếu nó treo thì máy thật vẫn bình an.",
+                citation: "Chương 1.6.5: Virtual Machines."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Thiết bị Bộ nhớ Cache trong hệ thống phân cấp tận dụng nguyên lý nào của chương trình máy tính để tăng hiệu suất?",
+                options: ["Nguyên lý tính cục bộ (Locality of reference - Cục bộ không gian và cục bộ thời gian).", "Nguyên lý ngẫu nhiên hoàn toàn (Random access principle).", "Nguyên lý dùng băng từ lưu trữ vĩnh viễn.", "Nguyên lý nén dữ liệu động."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Cục bộ thời gian (vừa truy cập sẽ sớm truy cập lại) và Cục bộ không gian (các ô nhớ cạnh nhau có xu hướng truy cập cùng nhau). Cache lưu dữ liệu này để CPU không phải ra RAM.<br><br><b>2. Phân tích & Dân dã:</b> Giống như bạn đặt những cuốn sách hay đọc nhất ngay trên mặt bàn làm việc (Cache) thay vì cất tận trong kho sách ở tầng dưới (RAM).",
+                citation: "Chương 1.3.2: The Memory Hierarchy (Cache Locality)."
+            },
+            {
+                category: "Chương 1: Kiến trúc & Phần cứng Nâng cao",
+                q: "Trong mô hình Client-Server hiện đại dựa trên kiến trúc Microkernel, việc truyền thông giữa các tiến trình client và server được thực hiện chủ yếu bằng phương pháp gì?",
+                options: ["Chia sẻ chung một biến toàn cục trong RAM.", "Truyền thông điệp (Message Passing) thông qua các lời gọi hàm IPC do nhân Microkernel chuyển tiếp.", "Dùng cáp mạng LAN kết nối hai tiến trình trên cùng một máy.", "Ghi trực tiếp dữ liệu lên đĩa từ."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Vì các dịch vụ nằm ở User space, chúng không gọi trực tiếp hàm của nhau được. Microkernel cung cấp cơ chế Message Passing để trao đổi dữ liệu an toàn.<br><br><b>2. Phân tích & Dân dã:</b> Giống như hai phòng ban trong công ty không được tự ý sang phòng nhau lục lọi tài liệu, mà phải viết giấy đề xuất và nhờ văn thư công ty (Microkernel) giao nhận.",
+                citation: "Chương 1.6.4: Client-Server / Microkernel IPC."
+            },
+
+            // ================== PHẦN 2: CHƯƠNG 2 (TIẾN TRÌNH & LUỒNG) (6 Câu) ==================
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Trạng thái chuyển đổi nào của tiến trình từ Ready sang Running được quyết định bởi thành phần nào của Hệ điều hành?",
+                options: ["Bộ định thời CPU (CPU Scheduler / Dispatcher).", "Trình điều khiển ổ đĩa cứng (Disk Driver).", "Chương trình biên dịch C++ (Compiler).", "Giao diện dòng lệnh (Shell)."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Bộ định thời CPU chọn một tiến trình từ hàng đợi Ready Queue và cấp phát CPU cho nó, đưa tiến trình sang trạng thái Running.<br><br><b>2. Phân tích & Dân dã:</b> Giống như trọng tài còi thổi cho phép cầu thủ dự bị bước vào sân cỏ thi đấu chính thức.",
+                citation: "Chương 2.1.2: Process States & Dispatcher."
+            },
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Khi xảy ra hiện tượng Chuyển đổi ngữ cảnh (Context Switch), hệ điều hành phải thực hiện công việc cốt lõi nào?",
+                options: ["Khởi động lại toàn bộ phần cứng bo mạch chủ.", "Lưu toàn bộ trạng thái thanh ghi, bộ đếm lệnh PC, con trỏ ngăn xếp SP của tiến trình cũ vào PCB của nó, sau đó nạp trạng thái ngữ cảnh từ PCB của tiến trình mới lên CPU.", "Xóa sạch dữ liệu trong bộ nhớ RAM chính.", "Chuyển đổi ngôn ngữ lập trình của tiến trình."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Context Switch là quá trình cất giữ bức ảnh trạng thái của tiến trình hiện tại vào PCB và phục hồi bức ảnh của tiến trình tiếp theo.<br><br><b>2. Phân tích & Dân dã:</b> Giống như bạn đang chơi dở ván game, phải bấm Pause, ghi nhớ chính xác vị trí nhân vật, máu, màn chơi vào sổ tay (PCB) rồi nhường máy cho người khác.",
+                citation: "Chương 2.1.6: Context Switch Implementation."
+            },
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Mô hình luồng kết hợp (Hybrid Threads / Many-to-Many Model) kết hợp giữa User-Level Threads (ULT) và Kernel-Level Threads (KLT) mang lại ưu điểm gì?",
+                options: ["Vừa giữ được tốc độ quản lý luồng nhanh ở không gian người dùng, vừa khắc phục được nhược điểm bị khóa toàn bộ tiến trình khi có luồng chờ I/O nhờ sự quản lý của Kernel.", "Loại bỏ hoàn toàn nhu cầu sử dụng CPU.", "Làm cho hệ thống không bao giờ bị lỗi phần mềm.", "Chỉ chạy được trên hệ điều hành MS-DOS."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Mô hình kết hợp ánh xạ nhiều luồng User lên một số lượng luồng Kernel linh hoạt, tối ưu hóa cả tốc độ tạo luồng lẫn khả năng xử lý ngắt chặn.<br><br><b>2. Phân tích & Dân dã:</b> Giải pháp 'vừa có tiếng vừa có miếng': Tạo luồng cực nhanh như ULT, nhưng khi một luồng bận đọc đĩa, các luồng khác vẫn chạy băng băng nhờ Kernel quản lý.",
+                citation: "Chương 2.2.6: Hybrid Thread Implementations."
+            },
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Trong mô hình đa luồng, khái niệm Thread-Local Storage (TLS) dùng để làm gì?",
+                options: ["Chia sẻ dữ liệu toàn cục cho tất cả các luồng trong tiến trình.", "Cung cấp một vùng biến độc lập riêng biệt cho từng luồng để tránh việc các luồng vô tình ghi đè dữ liệu của nhau.", "Lưu trữ mã nguồn C++ trên ổ cứng mạng.", "Quản lý kết nối Internet của tiến trình."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> TLS cung cấp cơ chế để mỗi luồng sở hữu một bản sao riêng biệt của các biến toàn cục hoặc tĩnh, tránh xung đột dữ liệu giữa các luồng.<br><br><b>2. Phân tích & Dân dã:</b> Dù anh em ở chung căn hộ, nhưng mỗi người vẫn có một chiếc tủ khóa cá nhân riêng (TLS) để cất đồ dùng riêng tư.",
+                citation: "Chương 2.2.3: Thread-Local Storage (TLS)."
+            },
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Hàm System Call execve() trong chuẩn POSIX thực hiện nhiệm vụ gì đối với tiến trình?",
+                options: ["Tạo ra một bản sao hoàn toàn mới của tiến trình hiện tại.", "Xóa bỏ hoàn toàn mã lệnh và không gian nhớ cũ của tiến trình hiện tại, sau đó nạp một chương trình thực thi mới từ đĩa và bắt đầu chạy từ hàm main() của nó.", "Tạm dừng tiến trình trong 10 giây.", "Tiêu diệt tiến trình con ngay lập tức."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> execve thay thế chương trình đang chạy bằng một chương trình mới trong cùng một Process ID (PID). Thường đi sau lệnh fork.<br><br><b>2. Phân tích & Dân dã:</b> Giống như bạn dùng xác của một người cũ (fork), sau đó thay hoàn toàn bộ não, ký ức và trang phục bằng một nhân vật hoàn toàn mới (execve).",
+                citation: "Chương 2.1.5: Process Creation with fork() and execve()."
+            },
+            {
+                category: "Chương 2: Quản lý Tiến trình Nâng cao",
+                q: "Hiện tượng Zombie Process (Tiến trình thây ma) trong hệ thống UNIX/Linux xuất hiện khi nào?",
+                options: ["Tiến trình con đã kết thúc nhưng tiến trình cha chưa gọi hàm wait() hoặc waitpid() để thu hồi mã trạng thái thoát của nó.", "Tiến trình bị nhiễm virus máy tính nặng.", "Tiến trình chạy quá thời gian Quantum cho phép.", "Tiến trình sử dụng hết 100% dung lượng RAM."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Khi tiến trình con kết thúc, nó giải phóng hầu hết tài nguyên nhưng vẫn giữ lại entry trong Process Table để cha đọc mã thoát. Nếu cha lờ đi không đọc, nó thành Zombie.<br><br><b>2. Phân tích & Dân dã:</b> Nhân viên đã xin nghỉ việc ở công ty, nhưng phòng nhân sự chưa chịu xóa tên ra khỏi hệ thống hồ sơ, cứ treo lơ lửng chiếm một chỗ trống.",
+                citation: "Chương 2.1.5: Termination and Zombie Processes."
+            },
+
+            // ================== PHẦN 3: CHƯƠNG 2 (ĐỒNG BỘ & BÀI TOÁN CỔ ĐIỂN) (6 Câu) ==================
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Bốn điều kiện cần để xảy ra hiện tượng Deadlock theo Coffman gồm những gì?",
+                options: ["Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.", "Time sharing, Space multiplexing, Paging, Segmentation.", "Fork, Exec, Wait, Exit.", "Ready, Running, Blocked, Terminated."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Bốn điều kiện kinh điển của Coffman: Loại trừ lẫn nhau, Vừa giữ vừa chờ, Không tước quyền, Chờ đợi vòng tròn.<br><br><b>2. Phân tích & Dân dã:</b> 4 chiếc xe ô tô đỗ đối đầu ở ngã tư không ai chịu lùi. Ai cũng giữ phần đường của mình, không nhường, đợi xe trước đi tạo thành vòng tròn kín.",
+                citation: "Chương 2.5.2: Conditions for Deadlock (Coffman Conditions)."
+            },
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Trong bài toán Sản xuất - Tiêu thụ, nếu không sử dụng cơ chế đồng bộ Semaphore hoặc Mutex mà dùng biến đếm thông thường, lỗi gì sẽ xảy ra?",
+                options: ["Lỗi tràn bộ đệm đĩa cứng.", "Lỗi Mất tín hiệu đánh thức (Lost Wakeup) hoặc xung đột biến đếm dẫn đến tiến trình bị treo hoặc hỏng dữ liệu bộ đệm.", "Lỗi kết nối mạng Internet.", "Lỗi chia cho số không."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Thao tác kiểm tra bộ đệm trống/đầy và thay đổi biến đếm không được bảo vệ nguyên tử sẽ dẫn đến việc tiến trình ngủ quên dù tài nguyên đã sẵn sàng.<br><br><b>2. Phân tích & Dân dã:</b> Người giao báo ném báo vào hòm thư đã đầy nhưng không gõ cửa báo chủ nhà, chủ nhà ngủ quên không lấy báo, khiến hòm thư vỡ tung.",
+                citation: "Chương 2.3.4: The Producer-Consumer Problem."
+            },
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Thuật toán Nhà băng (Banker's Algorithm) của Dijkstra dùng để giải quyết vấn đề gì trong hệ điều hành?",
+                options: ["Quản lý phân bổ tiền tài chính của tiến trình.", "Tránh deadlock bằng cách kiểm tra trạng thái an toàn (Safe State) trước khi cấp phát tài nguyên.", "Định thời CPU theo thuật toán ưu tiên cao nhất.", "Quản lý bộ nhớ ảo paging."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Banker's Algorithm mô phỏng trước các yêu cầu cấp phát. Nếu việc cấp phát dẫn đến trạng thái an toàn, HĐH mới cấp; ngược lại từ chối.<br><br><b>2. Phân tích & Dân dã:</b> Ông chủ ngân hàng khôn ngoan: Trước khi cho khách hàng vay tiền, ông ta tính xem số tiền còn lại trong két có đủ cứu nguy cho các khách hàng khác trả nợ không.",
+                citation: "Chương 2.5.3: Deadlock Avoidance - Banker's Algorithm."
+            },
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Trong giải pháp phần mềm kiểm tra miền tới hạn, giải pháp của Peterson đảm bảo được yêu cầu quan trọng nào?",
+                options: ["Chỉ cần dùng một biến đếm số nguyên đơn giản.", "Thỏa mãn đồng thời Mutual Exclusion, độc lập tốc độ CPU, không tiến trình ngoài miền găng được khóa tiến trình khác, và không bị chết đói.", "Loại bỏ hoàn toàn sự cần thiết của CPU.", "Chỉ chạy được trên hệ thống 1 CPU."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Thuật toán Peterson là giải pháp thuần phần mềm cho 2 tiến trình, đạt được đồng thời tính loại trừ lẫn nhau, tiến độ và không có chờ đợi độc hại.<br><br><b>2. Phân tích & Dân dã:</b> Đây là những thuật toán thuần code cực kỳ thông minh do các nhà khoa học máy tính nghĩ ra trước khi phần cứng hỗ trợ TSL hay Semaphore.",
+                citation: "Chương 2.3.3: Peterson's Solution Requirements."
+            },
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Bài toán Triết gia ăn tối minh họa cho vấn đề gì trong hệ điều hành?",
+                options: ["Tối ưu hóa tốc độ tính toán số học của CPU.", "Hiện tượng Deadlock và Starvation khi các tiến trình cùng tranh giành tài nguyên đơn lẻ.", "Lỗi tràn ngăn xếp bộ nhớ.", "Phương pháp nén file dữ liệu lớn."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> 5 triết gia ngồi quanh bàn ăn, mỗi người cần 2 chiếc đũa. Nếu tất cả cùng cầm đũa bên trái cùng lúc, hệ thống dính Deadlock vĩnh viễn.<br><br><b>2. Phân tích & Dân dã:</b> 5 người đói bụng ngồi chung bàn tròn mà chỉ có 5 chiếc đũa. Ai cũng giành cầm đũa bên trái và chờ đũa bên phải, kết quả là chết đói vì không ai chịu buông.",
+                citation: "Chương 2.4.1: The Dining Philosophers Problem."
+            },
+            {
+                category: "Chương 2: Đồng bộ & Bài toán Cổ điển",
+                q: "Sự khác biệt căn bản giữa Mutex và Semaphore là gì?",
+                options: ["Mutex có khái niệm Quyền sở hữu (chỉ tiến trình nào khóa mới được mở khóa), trong khi Semaphore là cơ chế báo hiệu thuần túy không có chủ sở hữu.", "Mutex chỉ dùng cho Windows, Semaphore chỉ dùng cho Linux.", "Semaphore chạy nhanh hơn Mutex gấp 100 lần.", "Mutex không bao giờ gây ra deadlock."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Mutex là khóa nhị phân có trạng thái sở hữu, chỉ luồng đã khóa mới được phép mở khóa. Semaphore là biến đếm tín hiệu có thể được UP/DOWN bởi bất kỳ tiến trình nào.<br><br><b>2. Phân tích & Dân dã:</b> Mutex giống chìa khóa phòng riêng của bạn. Semaphore giống số lượng vé vào cửa rạp chiếu phim.",
+                citation: "Chương 2.3.6: Mutex vs Semaphores."
+            },
+
+            // ================== PHẦN 4: CHƯƠNG 2 (ĐỊNH THỜI LÝ THUYẾT) (5 Câu) ==================
+            {
+                category: "Chương 2: Định thời & Real-Time",
+                q: "Trong các thuật toán định thời cho Hệ thống xử lý lô, SJF (Shortest Job First) có đặc điểm ưu việt gì về mặt toán học?",
+                options: ["Đảm bảo thời gian phản hồi tức thì cho người dùng.", "Đạt được Thời gian quay vòng trung bình tối ưu ngắn nhất.", "Không bao giờ xảy ra hiện tượng Starvation.", "Yêu cầu ít bộ nhớ RAM nhất."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> SJF chứng minh được về mặt lý thuyết là thuật toán tối ưu mang lại thời gian quay vòng trung bình nhỏ nhất cho tập hợp công việc xuất hiện cùng lúc.<br><br><b>2. Phân tích & Dân dã:</b> Ưu tiên giải quyết việc nhanh gọn nhẹ trước, giúp hầu hết mọi người đều hoàn thành việc của mình rất nhanh.",
+                citation: "Chương 2.4.3: Shortest Job First."
+            },
+            {
+                category: "Chương 2: Định thời & Real-Time",
+                q: "Thuật toán Lottery Scheduling phân phối CPU cho các tiến trình theo cơ chế nào?",
+                options: ["Phát vé số tỷ lệ thuận với mức độ quan trọng; HĐH quay số ngẫu nhiên để chọn tiến trình chạy.", "Sắp xếp theo thứ tự bảng chữ cái tên tiến trình.", "Cấp phát CPU theo bốc thăm trúng thưởng tủ lạnh.", "Sử dụng độ dài file để định thời."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Lottery scheduling cấp cho mỗi tiến trình vé số. Tiến trình quan trọng giữ nhiều vé. Cứ mỗi chu kỳ, HĐH bốc thăm ngẫu nhiên 1 vé.<br><br><b>2. Phân tích & Dân dã:</b> Giống chương trình quay số: Ai mua nhiều vé hơn thì xác suất trúng CPU cao hơn, nhưng tiến trình có 1 vé vẫn có cơ hội trúng, giải quyết hoàn toàn bài toán chết đói.",
+                citation: "Chương 2.4.4: Lottery Scheduling."
+            },
+            {
+                category: "Chương 2: Định thời & Real-Time",
+                q: "Trong các hệ thống Thời gian thực, thuật toán định thời RM (Rate Monotonic) phân bổ mức ưu tiên cho các tiến trình dựa trên tiêu chí nào?",
+                options: ["Tiến trình nào có chu kỳ lặp lại NGẮN NHẤT sẽ được gán mức ưu tiên CAO NHẤT.", "Tiến trình nào có thời gian xử lý dài nhất.", "Tiến trình nào tạo ra trước được ưu tiên trước.", "Chọn ngẫu nhiên theo thời gian hệ thống."],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Rate Monotonic Scheduling ưu tiên cho các tác vụ có chu kỳ ngắn hơn (tần suất xuất hiện dày đặc hơn) vì chúng cần hoàn thành gấp hơn.<br><br><b>2. Phân tích & Dân dã:</b> Việc bạn phải thở liên tục (chu kỳ ngắn, ưu tiên tuyệt đối tối cao) so với việc bạn chớp mắt.",
+                citation: "Chương 2.4.5: Rate Monotonic Scheduling."
+            },
+            {
+                category: "Chương 2: Định thời & Real-Time",
+                q: "Thuật toán Fair-Share Scheduling xem xét yếu tố nào trước khi cấp phát CPU?",
+                options: ["Tài khoản ngân hàng của người dùng.", "Chủ sở hữu của tiến trình; đảm bảo mỗi user nhận được tỷ lệ công bằng về thời gian CPU, tránh việc một user tạo ra hàng trăm tiến trình con chiếm dụng máy.", "Dung lượng ổ cứng.", "Màu sắc giao diện."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Fair-Share scheduling tính toán nhóm tiến trình theo từng User. User nào chạy ít tiến trình hơn sẽ được ưu tiên cấp CPU hơn.<br><br><b>2. Phân tích & Dân dã:</b> Tránh tình trạng một sinh viên mở 500 tab Chrome làm nghẽn máy, khiến các sinh viên khác dùng chung máy chủ bị kẹt cứng.",
+                citation: "Chương 2.4.4: Fair-Share Scheduling."
+            },
+            {
+                category: "Chương 2: Định thời & Real-Time",
+                q: "Thuật toán MLFQ (Multilevel Feedback Queue) cho phép điều gì xảy ra với một tiến trình?",
+                options: ["Tiến trình bị cố định ở một hàng đợi duy nhất suốt đời.", "Tiến trình có thể di chuyển giữa các hàng đợi khác nhau dựa trên hành vi sử dụng CPU nhiều hay ít.", "Tiến trình tự động xóa khỏi hệ thống.", "Tiến trình chuyển thẳng vào Cache."],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> MLFQ phân nhiều mức ưu tiên. Tiến trình tính toán nhiều bị phạt đẩy xuống hàng đợi thấp. Tiến trình tương tác (gõ phím, I/O) được thưởng đẩy lên hàng đợi cao.<br><br><b>2. Phân tích & Dân dã:</b> Hệ thống đánh giá nhân viên: Ai chăm chỉ tương tác được thưởng lên hàng VIP; ai ngốn tài nguyên vô ích bị đẩy xuống tầng lao động phổ thông.",
+                citation: "Chương 2.4.4: Multilevel Feedback Queues."
+            },
+
+            // ================== PHẦN 5: BÀI TẬP TÍNH TOÁN TỰ LUẬN NÂNG CAO (6 Câu) ==================
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Một hệ thống máy tính đa chương trình có tổng RAM là 8GB. Hệ điều hành chiếm 2GB. Mỗi tiến trình ứng dụng cần 2GB RAM. Xác suất một tiến trình phải chờ I/O là p = 0.6. Theo mô hình xác suất Tanenbaum, hiệu suất sử dụng CPU là bao nhiêu?",
+                options: ["64.8%", "78.4%", "80.0%", "21.6%"],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        1. RAM trống cho ứng dụng: $8\\text{GB} - 2\\text{GB} = 6\\text{GB}$.<br>
+                        2. Số tiến trình chạy đồng thời ($n$): $6\\text{GB} / 2\\text{GB} = 3$ tiến trình.<br>
+                        3. Xác suất cả 3 tiến trình cùng chờ I/O: $p^n = 0.6^3 = 0.216$.<br>
+                        4. Hiệu suất CPU: $1 - p^n = 1 - 0.216 = 0.784$ (78.4%).<br>
+                        $\\rightarrow$ <b>Đáp án: 78.4%</b>.
+                    </div>
+                `,
+                citation: "Chương 2.1.7: Modeling Multiprogramming."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Cho 3 tiến trình P1, P2, P3 đến hệ thống lần lượt tại t1=0ms, t2=2ms, t3=4ms. Burst time tương ứng: P1=5ms, P2=3ms, P3=2ms. Sử dụng định thời SRTF (Preemptive SJF), thời gian chờ trung bình (Average Waiting Time) là bao nhiêu?",
+                options: ["1.33 ms", "2.00 ms", "2.67 ms", "3.00 ms"],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận (Giản đồ Gantt SRTF):</b><br>
+                        - t=0 $\\rightarrow$ 2: P1 chạy (còn 3ms).<br>
+                        - t=2 $\\rightarrow$ 5: P2 chạy xong hoàn toàn (Burst = 3).<br>
+                        - t=5 $\\rightarrow$ 7: P3 chạy xong hoàn toàn (Burst = 2).<br>
+                        - t=7 $\\rightarrow$ 10: P1 chạy nốt 3ms còn lại.<br>
+                        - Completion: P1=10, P2=5, P3=7.<br>
+                        - Turnaround: P1=10, P2=3, P3=3.<br>
+                        - Waiting = TAT - Burst: WT1=5, WT2=0, WT3=1.<br>
+                        - Trung bình WT = $(5 + 0 + 1) / 3 = 2.00$ ms.<br>
+                        $\\rightarrow$ <b>Đáp án: 2.00 ms</b>.
+                    </div>
+                `,
+                citation: "Chương 2.4.3: Preemptive SJF (SRTF)."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Một hệ thống Real-time có 4 sự kiện tuần hoàn: E1 (20ms, 2ms); E2 (50ms, 10ms); E3 (100ms, 20ms); E4 (200ms, 40ms). Sử dụng điều kiện Rate Monotonic (RM), hệ thống này có lập lịch thành công không?",
+                options: ["Có, tổng tải CPU là 70% (<= 100%).", "Không, tổng tải vượt 100%.", "Có, vì tổng tải đúng bằng 100%.", "Không, vì E1 chiếm quá nhiều thời gian."],
+                correct: 0,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        - Tải E1: $2/20 = 0.10$<br>
+                        - Tải E2: $10/50 = 0.20$<br>
+                        - Tải E3: $20/100 = 0.20$<br>
+                        - Tải E4: $40/200 = 0.20$<br>
+                        - Tổng tải = $0.10 + 0.20 + 0.20 + 0.20 = 0.70$ (70%).<br>
+                        Vì tổng tải 70% nhỏ hơn giới hạn lý thuyết RM cho 4 tác vụ ($\\approx 75.6\%$) và nhỏ hơn 100%, hệ thống lập lịch thành công 100%.<br>
+                        $\\rightarrow$ <b>Đáp án: Có.</b>
+                    </div>
+                `,
+                citation: "Chương 2.4.5: Rate Monotonic Schedulability Test."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Biến Semaphore S khởi tạo S = 5. Thực thi lần lượt: 12 phép toán DOWN(S) và 7 phép toán UP(S). Hỏi giá trị cuối cùng của S và số lượng tiến trình bị chặn (Blocked) là bao nhiêu?",
+                options: ["S = 0, Blocked = 0", "S = -2, Blocked = 2", "S = 2, Blocked = 0", "S = -7, Blocked = 7"],
+                correct: 0,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        - Khởi tạo: $S = 5$.<br>
+                        - Gọi 12 lần DOWN $\\rightarrow S = 5 - 12 = -7$.<br>
+                        - Gọi 7 lần UP $\\rightarrow S = -7 + 7 = 0$.<br>
+                        - Do $S = 0$ (không âm), không còn tiến trình nào phải ngủ đông.<br>
+                        $\\rightarrow$ <b>Đáp án: S = 0, Blocked = 0</b>.
+                    </div>
+                `,
+                citation: "Chương 2.3.5: Counting Semaphores Calculation."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Banker's Algorithm: Cho Allocation = [[1, 0], [2, 1], [0, 3]], Max = [[3, 2], [3, 3], [2, 5]], Available = [1, 1]. (Gợi ý xét Available giả định ban đầu [2, 2]). Hỏi chuỗi an toàn là gì?",
+                options: ["Không an toàn.", "P2 -> P1 -> P3", "P1 -> P2 -> P3", "P3 -> P1 -> P2"],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        - Need = Max - Allocation:<br>
+                        + P1 Need = [2, 2]<br>
+                        + P2 Need = [1, 2]<br>
+                        + P3 Need = [2, 2]<br>
+                        - Xét Avail = [2, 2]:<br>
+                        + P2 cần [1, 2] <= [2, 2]. P2 chạy xong, trả lại [2, 1]. Avail mới = [4, 3].<br>
+                        + P1 cần [2, 2] <= [4, 3]. P1 chạy xong, trả lại [1, 0]. Avail mới = [5, 3].<br>
+                        + P3 cần [2, 2] <= [5, 3]. P3 chạy xong.<br>
+                        - Chuỗi an toàn: <b>P2 -> P1 -> P3</b>.<br>
+                        $\\rightarrow$ <b>Đáp án: An toàn với chuỗi: P2 -> P1 -> P3</b>.
+                    </div>
+                `,
+                citation: "Chương 2.5.3: Banker's Algorithm Safety Check."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận Nâng cao",
+                q: "Paging: Page size là 4KB (4096 bytes). Kích thước không gian logic của tiến trình là 16384 bytes. Tiến trình này chiếm bao nhiêu trang (Pages)?",
+                options: ["2 trang", "4 trang", "8 trang", "16 trang"],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        - Số trang cần thiết = Kích thước tiến trình / Kích thước 1 trang<br>
+                        $$ n = \\frac{16384 \\text{ bytes}}{4096 \\text{ bytes}} = 4 \\text{ trang} $$<br>
+                        $\\rightarrow$ <b>Đáp án: 4 trang</b>.
+                    </div>
+                `,
+                citation: "Chương 3: Paging Fundamentals."
+            }
+        ];
+
+        let score = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+            const scoreDisplay = document.getElementById('score-display');
+
+            quizData.forEach((qObj) => {
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-lg md:text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-blue-600 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10 p-6 bg-zinc-50/50 rounded-xl border border-zinc-100 hover:border-zinc-300 transition-colors";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-semibold text-zinc-900 mb-5 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="bg-zinc-900 text-white px-2 py-1 rounded text-sm mr-2 shadow-sm">Q${questionCounter}</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-3";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-6 clrs-proof rounded-lg";
+                answerDiv.innerHTML = `
+                    <h4 class="font-bold text-zinc-900 mb-3 flex items-center"><i class="fa-solid fa-graduation-cap text-blue-600 mr-2"></i> Lời giải & Phân tích chi tiết:</h4>
+                    <div class="text-zinc-700 space-y-2 leading-relaxed">${qObj.explanation}</div>
+                    <p class="text-xs font-mono text-zinc-500 mt-4 pt-3 border-t border-zinc-200"><i class="fa-solid fa-book-bookmark mr-2"></i>Tham chiếu giáo trình: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-5 py-4 rounded-lg border border-zinc-200 text-zinc-700 bg-white hover:bg-zinc-50 hover:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base font-medium shadow-sm";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-8 inline-block text-zinc-400">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'hover:border-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600 text-lg"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600 text-lg"></i>`;
+                            }
+                        });
+
+                        if (optIndex === qObj.correct) {
+                            score++;
+                            scoreDisplay.innerText = `Điểm: ${score}/30`;
+                            scoreDisplay.classList.add('bg-emerald-100', 'text-emerald-800');
+                            setTimeout(() => {
+                                scoreDisplay.classList.remove('bg-emerald-100', 'text-emerald-800');
+                            }, 500);
+                        }
+
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

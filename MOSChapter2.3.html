@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 2.3 (IPC)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-72 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Chương 2.3: IPC (50 Câu)</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Race Conditions & Critical Regions" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">1. Race Conditions & Critical Regions</a>
+                    <a href="#section-Busy Waiting & Khóa" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">2. Busy Waiting & Các loại Khóa</a>
+                    <a href="#section-Semaphore & Mutex" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">3. Semaphore & Mutex</a>
+                    <a href="#section-Monitor & Message Passing" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">4. Monitor & Message Passing</a>
+                    <a href="#section-Các Bài Toán Kinh Điển" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 py-1.5 transition-colors">5. Các Bài Toán Kinh Điển (IPC)</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Lưu ý:</strong> Click vào menu để nhảy đến chủ đề. Hệ thống tự động chấm điểm và trích xuất sách.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-2">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 2.3: INTERPROCESS COMMUNICATION (IPC)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Nghệ thuật Đồng bộ hóa Tiến trình & Luồng (50 Câu chuyên sâu)</p>
+                </div>
+                <div id="questions-list" class="space-y-12 mt-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            // ================== PHẦN 1: RACE CONDITIONS & CRITICAL REGIONS (1-10) ==================
+            { category: "Race Conditions & Critical Regions", q: "Theo Tanenbaum, IPC (Interprocess Communication) cần giải quyết 3 vấn đề cốt lõi. Hai vấn đề đầu là 'Truyền dữ liệu' và 'Đảm bảo không dẫm chân lên nhau'. Vấn đề thứ ba là gì?", options: ["Nén dữ liệu để tiết kiệm RAM.", "Bảo mật dữ liệu khỏi hacker.", "Đồng bộ hóa trình tự thực thi (Proper Sequencing). Ví dụ: Tiến trình B phải chờ Tiến trình A làm xong mới được chạy tiếp.", "Tự động tắt máy khi quá tải."], correct: 2, explanation: "IPC gồm 3 phần: 1. Cách truyền thông tin (Message passing, Shared memory). 2. Tránh xung đột khi dùng chung tài nguyên (Mutual exclusion). 3. Đồng bộ hóa sự phụ thuộc (Ví dụ: Trình in phải chờ file có dữ liệu rồi mới in).", citation: "Chương 2.3: Interprocess Communication." },
+            { category: "Race Conditions & Critical Regions", q: "Thuật ngữ 'Điều kiện tranh đoạt' (Race Condition) được định nghĩa chuẩn xác nhất là gì?", options: ["Sự cố phần cứng làm máy tính chạy đua tốc độ vòng quay.", "Tình trạng hai hay nhiều tiến trình cùng đọc/ghi vào một dữ liệu dùng chung, và kết quả cuối cùng phụ thuộc vào việc TRÌNH TỰ thực thi (ai chạy trước, ai chạy sau) diễn ra một cách ngẫu nhiên.", "Thuật toán tối ưu giúp CPU chạy nhanh nhất.", "Việc hai HĐH tranh giành quyền kiểm soát máy."], correct: 1, explanation: "Ví dụ kinh điển: Hai người cùng rút tiền ở 2 cây ATM từ cùng 1 tài khoản chung tại cùng một tích tắc. Nếu hệ thống không khóa, tiền sẽ bị trừ sai do cả hai cùng đọc số dư ban đầu. Kết quả phụ thuộc vào ai ghi đè lên ai cuối cùng.", citation: "Chương 2.3.1: Race Conditions." },
+            { category: "Race Conditions & Critical Regions", q: "Ví dụ về bộ đệm máy in (Print Spooler), biến `in` chỉ vị trí ô trống tiếp theo, biến `out` chỉ vị trí file cần in. Race Condition xảy ra ở Spooler khi nào?", options: ["Máy in bị hết mực.", "Ổ đĩa cứng đầy không lưu được file.", "Tiến trình A đọc `in = 7`, chưa kịp ghi file vào ô 7 thì bị mất CPU. Tiến trình B chen vào đọc `in = 7`, ghi file của nó vào ô 7 và cập nhật `in = 8`. Lát sau A tỉnh lại, mù quáng ghi đè file của A lên ô 7 làm mất file của B.", "Máy in bị rút điện đột ngột."], correct: 2, explanation: "Vì thao tác 'đọc biến in -> ghi file -> cập nhật biến in' không phải là một hành động nguyên tử (Atomic). Nó bị chia cắt giữa chừng bởi bộ định thời của CPU, dẫn đến việc ghi đè lên tài nguyên của người khác.", citation: "Chương 2.3.1: Race Conditions (Print Spooler example)." },
+            { category: "Race Conditions & Critical Regions", q: "Để tránh Race Condition, ta cần tìm cách ngăn cấm nhiều tiến trình cùng lúc đọc/ghi dữ liệu chung. Đoạn chương trình chứa các thao tác chạm vào dữ liệu chung đó được gọi là gì?", options: ["Kernel Space (Không gian nhân).", "Critical Region / Critical Section (Miền tới hạn / Miền găng).", "Dead Zone (Vùng chết).", "Shared Memory (Bộ nhớ chia sẻ)."], correct: 1, explanation: "Miền tới hạn (Critical Region) là một ĐOẠN CODE. Nếu đoạn code đó chứa lệnh đọc/ghi biến dùng chung, thì ta phải bảo vệ nó bằng nguyên tắc Loại trừ lẫn nhau (Mutual Exclusion): Không cho phép 2 tiến trình cùng lọt vào Miền tới hạn của chúng cùng một lúc.", citation: "Chương 2.3.2: Critical Regions." },
+            { category: "Race Conditions & Critical Regions", q: "Một giải pháp đồng bộ hóa (Mutual Exclusion) được coi là HOÀN HẢO nếu nó thỏa mãn 4 điều kiện. Điều kiện ĐẦU TIÊN là gì?", options: ["Phải chạy trên CPU Intel.", "Không bao giờ có hai tiến trình cùng lúc nằm trong miền tới hạn của chúng.", "Phải dùng bằng ngôn ngữ Assembly.", "Không sử dụng bộ nhớ RAM."], correct: 1, explanation: "Điều kiện 1 (Cốt lõi): No two processes may be simultaneously inside their critical regions. Đây chính là định nghĩa của Khóa loại trừ lẫn nhau (Mutual Exclusion).", citation: "Chương 2.3.2: Critical Regions (4 Conditions)." },
+            { category: "Race Conditions & Critical Regions", q: "Điều kiện HOÀN HẢO THỨ HAI của giải pháp đồng bộ hóa nhấn mạnh việc không được phép giả định (No assumptions) về điều gì?", options: ["Không giả định về tốc độ của CPU và số lượng CPU trong máy tính.", "Không giả định về độ phân giải màn hình.", "Không giả định về số lượng RAM tối đa.", "Không giả định về dung lượng đĩa cứng."], correct: 0, explanation: "Giải pháp phải đúng đắn về mặt toán học. Nó phải hoạt động hoàn hảo dù máy có 1 Core hay 64 Cores, dù Core A chạy nhanh gấp 10 lần Core B, hay khi bộ định thời (Scheduler) ngắt CPU một cách ngẫu nhiên kỳ quặc nhất.", citation: "Chương 2.3.2: Critical Regions." },
+            { category: "Race Conditions & Critical Regions", q: "Điều kiện THỨ BA (Tiến trình bên ngoài) quy định gì để tránh làm hệ thống bị nghẽn?", options: ["Tiến trình bên ngoài phải ngủ.", "Không một tiến trình nào ĐANG CHẠY BÊN NGOÀI miền tới hạn của nó lại được phép ngăn cản (block) các tiến trình khác bước vào miền tới hạn.", "Tiến trình bên ngoài phải trả tiền để vào.", "Tiến trình bên ngoài có quyền ưu tiên cao nhất."], correct: 1, explanation: "Nếu tôi đang ngồi uống cà phê ở nhà (bên ngoài miền tới hạn), tôi không có quyền giữ chìa khóa nhà vệ sinh công cộng (miền tới hạn) để ngăn người khác vào. Kẻ không xài chung tài nguyên thì không được phép gây cản trở.", citation: "Chương 2.3.2: Critical Regions." },
+            { category: "Race Conditions & Critical Regions", q: "Điều kiện THỨ TƯ (Chờ đợi hữu hạn - Bounded Waiting) bảo vệ hệ thống khỏi hiện tượng gì?", options: ["Tràn bộ nhớ đệm.", "Starvation (Chết đói) - Không tiến trình nào phải chờ đợi vô tận để được bước vào miền tới hạn.", "Crash màn hình xanh.", "Quá nhiệt CPU."], correct: 1, explanation: "Nếu tiến trình A và B cứ thay phiên nhau vào miền tới hạn liên tục (ping-pong), còn tiến trình C đứng chờ ở ngoài mãi mãi không đến lượt, thì giải pháp đó là một giải pháp tồi vì gây ra Starvation (Chết đói tài nguyên).", citation: "Chương 2.3.2: Critical Regions." },
+            { category: "Race Conditions & Critical Regions", q: "Tóm lại, mục đích duy nhất của Miền tới hạn (Critical Region) là:", options: ["Chuyển CPU sang chế độ Kernel Mode.", "Tạo ra môi trường mà các tiến trình không bao giờ phải giao tiếp.", "Bảo đảm rằng khi một tiến trình đang thao tác với dữ liệu dùng chung, mọi tiến trình khác muốn thao tác với dữ liệu đó ĐỀU PHẢI ĐỨNG CHỜ ở ngoài.", "Mã hóa luồng dữ liệu truyền qua mạng."], correct: 2, explanation: "Đó là cách duy nhất để tránh Race Condition. Biến dữ liệu dùng chung thành một căn phòng có 1 chìa khóa duy nhất. Ai vào trước thì khóa cửa (Lock), làm xong ra ngoài thì trả chìa (Unlock).", citation: "Chương 2.3.2: Critical Regions." },
+            { category: "Race Conditions & Critical Regions", q: "Một tiến trình chỉ nằm trong Miền tới hạn trong bao lâu?", options: ["Càng lâu càng tốt.", "Mãi mãi cho đến khi bị tắt.", "Chỉ trong một khoảng thời gian RẤT NGẮN, đủ để đọc/ghi xong dữ liệu dùng chung, sau đó phải thoát ra ngay để nhường người khác.", "Một ngày."], correct: 2, explanation: "Luật bất thành văn: Miền tới hạn chỉ được bọc quanh một vài dòng code thao tác bộ nhớ chung. Nếu bạn mang cả một thuật toán quét virus chạy hàng giờ vào trong miền tới hạn, cả hệ thống sẽ bị treo vì mọi tiến trình khác phải đứng chờ bạn.", citation: "Chương 2.3.2: Critical Regions." },
+
+            // ================== PHẦN 2: BUSY WAITING & CÁC LOẠI KHÓA (11-20) ==================
+            { category: "Busy Waiting & Khóa", q: "Giải pháp ĐƠN GIẢN NHẤT để ngăn cản việc CPU chuyển đổi tiến trình (tránh Race Condition) trên máy tính 1 nhân là gì?", options: ["Tắt màn hình.", "Tiến trình vừa bước vào Miền tới hạn sẽ Lệnh tắt mọi ngắt phần cứng (Disabling Interrupts). Không có ngắt đồng hồ thì HĐH không thể tước CPU của nó.", "Rút điện ổ cứng.", "Dùng lệnh Sleep()."], correct: 1, explanation: "Disabling Interrupts (CLI/STI). Nếu đồng hồ không gõ ngắt, HĐH không thức dậy, tiến trình sẽ giữ CPU mãi mãi. Dù tránh được Race Condition, nhưng cực kỳ nguy hiểm: Nhỡ tiến trình đó lỗi không bật lại ngắt, cả hệ thống sẽ đứng im vĩnh viễn.", citation: "Chương 2.3.3: Mutual Exclusion with Busy Waiting (Disabling Interrupts)." },
+            { category: "Busy Waiting & Khóa", q: "Tại sao giải pháp 'Tắt ngắt' (Disabling Interrupts) bị coi là TỒI TỆ và không được cấp cho các ứng dụng User mode?", options: ["Vì nó làm tốn điện.", "Vì giao quyền tắt ngắt cho User là giao dao cho kẻ giết người. Hơn nữa, trên máy tính Đa nhân (Multicore), tắt ngắt ở Core 1 không ngăn được Core 2 nhảy vào miền tới hạn.", "Vì nó làm chậm CPU.", "Vì nó bị cấm bởi chuẩn POSIX."], correct: 1, explanation: "Chỉ Kernel mới được phép tắt ngắt trong thời gian siêu ngắn (vài micro-giây) để cập nhật cấu trúc dữ liệu. Trên hệ Multiprocessor, tắt ngắt (chỉ tác dụng trên 1 CPU) hoàn toàn vô dụng với các CPU còn lại cùng chia sẻ thanh RAM.", citation: "Chương 2.3.3: Disabling Interrupts." },
+            { category: "Busy Waiting & Khóa", q: "Giải pháp dùng một biến cờ chung (Lock variable: 0 là mở, 1 là khóa). Tại sao nó THẤT BẠI hoàn toàn trong việc chống Race Condition?", options: ["Vì biến không lưu được số 1.", "Vì thao tác kiểm tra cờ `if(lock == 0)` và thao tác khóa cờ `lock = 1` BỊ TÁCH RỜI. Hai tiến trình có thể cùng lọt qua câu lệnh `if(lock == 0)` trước khi một trong hai kịp ghi số 1.", "Vì nó tốn RAM.", "Vì nó chỉ chạy được trên UNIX."], correct: 1, explanation: "Lỗi kinh điển: A thấy `lock=0`, A định đổi `lock=1` thì A bị mất CPU. B vào thấy `lock=0` (do A chưa kịp đổi), B đổi `lock=1` và đi vào. A tỉnh lại, do lúc nãy thấy bằng 0 rồi, A cũng đi vào. Boom! Hai người trong miền tới hạn.", citation: "Chương 2.3.3: Lock Variables." },
+            { category: "Busy Waiting & Khóa", q: "Giải pháp 'Luân phiên nghiêm ngặt' (Strict Alternation) dùng biến `turn` để chỉ định đến lượt ai. Nhược điểm chí mạng của nó là vi phạm Điều kiện số mấy của Miền tới hạn?", options: ["Vi phạm Điều kiện 1 (Hai tiến trình cùng vào).", "Vi phạm Điều kiện 3 (Tiến trình bên ngoài ngăn cản tiến trình muốn vào).", "Vi phạm Điều kiện 4 (Chờ đợi vô hạn).", "Không vi phạm gì."], correct: 1, explanation: "Nếu `turn = 0` (lượt của A), nhưng A đang làm việc riêng không thèm vào miền tới hạn. B muốn vào nhưng bị cản lại (vì turn khác 1). Rõ ràng A đang ở NGOÀI miền tới hạn nhưng lại cản trở B. Giải pháp này tồi.", citation: "Chương 2.3.3: Strict Alternation." },
+            { category: "Busy Waiting & Khóa", q: "Thuật toán phần mềm HOÀN HẢO đầu tiên giải quyết trọn vẹn Mutual Exclusion cho 2 tiến trình mà không cần phần cứng đặc biệt tên là gì?", options: ["Thuật toán Dijkstra.", "Thuật toán Turing.", "Thuật toán Peterson (1981).", "Thuật toán Lamport."], correct: 2, explanation: "Gary Peterson đã kết hợp cả 'biến turn' (nhường nhịn) và mảng 'cờ quan tâm' (interested flag). Thuật toán này gọn gàng, thanh lịch và chứng minh toán học hoàn hảo cho bài toán 2 tiến trình.", citation: "Chương 2.3.3: Peterson's Solution." },
+            { category: "Busy Waiting & Khóa", q: "Cơ chế cốt lõi trong thuật toán Peterson khi 2 tiến trình cùng muốn vào miền tới hạn cùng một lúc (Race Condition xảy ra) là gì?", options: ["Cả 2 đều bị văng ra.", "Tiến trình nào ghi đè lên biến `turn` CUỐI CÙNG sẽ là kẻ phải nhường bước (đứng chờ ở vòng lặp while).", "Chúng sẽ tự bốc thăm ngẫu nhiên.", "Tiến trình cha sẽ vào trước tiến trình con."], correct: 1, explanation: "Cả A và B đều hét lên: 'Tôi muốn vào' (set cờ = TRUE). Sau đó cả hai đều lịch sự nói: 'Mời bạn vào trước' (`turn = bạn`). Vì thao tác ghi biến `turn` bị ghi đè, ai ghi CUỐI CÙNG sẽ là người gánh giá trị đó và mắc kẹt ở vòng lặp while.", citation: "Chương 2.3.3: Peterson's Solution." },
+            { category: "Busy Waiting & Khóa", q: "Khái niệm 'Busy Waiting' (Chờ đợi bận rộn / Spinlock) được hiểu là gì?", options: ["Tiến trình đi ngủ trong lúc chờ đợi.", "Tiến trình liên tục chạy một vòng lặp rỗng (ví dụ: `while(lock == 1);`) để kiểm tra liên tục xem cửa đã mở chưa. Việc này thiêu đốt CPU 100% cực kỳ lãng phí.", "CPU từ chối thực hiện lệnh.", "Tiến trình mở quá nhiều cửa sổ."], correct: 1, explanation: "Busy Waiting giống như bạn đứng gõ cửa nhà vệ sinh liên tục không nghỉ 1 giây nào cho đến khi cửa mở. Nó tiêu hao tài nguyên CPU khổng lồ thay vì nhường CPU cho người khác chạy.", citation: "Chương 2.3.3: Mutual Exclusion with Busy Waiting." },
+            { category: "Busy Waiting & Khóa", q: "Để loại bỏ nhược điểm bằng phần mềm, các kiến trúc CPU cung cấp một lệnh PHẦN CỨNG có tên là TSL (Test and Set Lock). Lệnh này có đặc tính gì?", options: ["Nó tắt máy tính lập tức.", "Nó là lệnh 'Nguyên tử' (Atomic). Nó vừa ĐỌC biến lock cũ, vừa GHI số 1 vào biến lock trong MỘT chu kỳ bus bộ nhớ, không một CPU nào khác có thể xen ngang.", "Nó nhân đôi dung lượng RAM.", "Nó dùng để kiểm tra màn hình."], correct: 1, explanation: "Lệnh TSL (Test and Set Lock) khóa phần cứng bộ nhớ (Lock memory bus) trong tíc tắc. CPU đọc giá trị, set giá trị thành 1 rồi nhả bộ nhớ. Không một CPU/Tiến trình nào có thể chèn vào giữa thao tác đọc và ghi này. Giải quyết dứt điểm lỗi của Lock Variable.", citation: "Chương 2.3.3: The TSL Instruction." },
+            { category: "Busy Waiting & Khóa", q: "Một dạng lệnh phần cứng khác tương tự TSL được dùng nhiều trên chip x86 (Intel) là lệnh gì?", options: ["JUMP.", "XCHG (Exchange - Đổi chỗ nội dung thanh ghi và ô nhớ một cách nguyên tử).", "MOV.", "ADD."], correct: 1, explanation: "XCHG đổi giá trị giữa 1 thanh ghi (chứa số 1) và ô nhớ `lock`. Nếu ô nhớ `lock` đang là 0, sau lệnh XCHG, thanh ghi có số 0 (nghĩa là cửa đang mở, ta được vào) và ô nhớ biến thành 1 (ta đã khóa cửa). XCHG cũng là lệnh Atomic.", citation: "Chương 2.3.3: The XCHG Instruction." },
+            { category: "Busy Waiting & Khóa", q: "Ngoại trừ sự lãng phí CPU, nhược điểm tồi tệ nhất của Busy Waiting (Spinlock) khi kết hợp với Hệ thống có Thứ tự ưu tiên (Priority Scheduling) là lỗi gì?", options: ["Lỗi tràn bộ đệm.", "Nghịch lý đảo ngược ưu tiên (Priority Inversion Problem).", "Deadlock vô cực.", "Hỏng phần cứng."], correct: 1, explanation: "Nghịch lý: L (ưu tiên thấp) đang giữ khóa. H (ưu tiên cao) thức dậy và muốn vào miền tới hạn. H quay vòng lặp spinlock chờ L mở khóa. NHƯNG vì H có ưu tiên cao hơn, Scheduler không bao giờ cho L chạy (để L mở khóa). Kết quả H đứng quay mãi mãi, hệ thống treo.", citation: "Chương 2.3.4: Sleep and Wakeup (Priority Inversion Problem)." },
+
+            // ================== PHẦN 3: SEMAPHORE & MUTEX (21-30) ==================
+            { category: "Semaphore & Mutex", q: "Để giải quyết thảm họa lãng phí CPU của Busy Waiting, ta dùng cơ chế Sleep & Wakeup. Nhược điểm chí mạng dẫn đến 'Lost Wakeup Problem' (Lỗi mất tín hiệu đánh thức) là gì?", options: ["Tín hiệu đi lạc qua mạng.", "Tín hiệu Wakeup (Đánh thức) được gửi đến một tiến trình CHƯA kịp đi ngủ (Sleep), do đó tín hiệu bị bốc hơi. Lát sau tiến trình đó đi ngủ, nó sẽ ngủ vĩnh viễn.", "Người dùng quên bấm nút Wakeup.", "CPU từ chối nhận tín hiệu."], correct: 1, explanation: "Ví dụ Producer-Consumer: Consumer thấy kho rỗng, chuẩn bị đi ngủ. Lúc đó CPU ngắt. Producer sản xuất 1 món, thấy kho từ 0 lên 1 bèn gửi tín hiệu Wakeup cho Consumer. Nhưng Consumer chưa ngủ! Tín hiệu bay mất. Lát sau Consumer nạp lại CPU và... đi ngủ. Nó sẽ ngủ mãi mãi.", citation: "Chương 2.3.4: The Producer-Consumer Problem (Lost Wakeup)." },
+            { category: "Semaphore & Mutex", q: "Nhà khoa học máy tính huyền thoại E.W. Dijkstra đã đề xuất cấu trúc dữ liệu nào vào năm 1965 để giải quyết triệt để lỗi 'Mất tín hiệu đánh thức'?", options: ["Stack.", "Queue.", "Semaphore (Cột cờ tín hiệu).", "Tree."], correct: 2, explanation: "Dijkstra nhận ra rằng Tín hiệu Wakeup không được phép 'bốc hơi'. Ông tạo ra biến Semaphore (một số nguyên). Khi có tín hiệu Wakeup mà không ai nhận, biến Semaphore sẽ CỘNG THÊM 1 để LƯU TRỮ tín hiệu đó lại cho tương lai.", citation: "Chương 2.3.5: Semaphores." },
+            { category: "Semaphore & Mutex", q: "Semaphore có hai phép toán cốt lõi do Dijkstra đặt tên là P (Proberen) và V (Verhogen). Ngày nay chúng thường được gọi là gì?", options: ["Start và Stop.", "DOWN và UP (hoặc Wait và Signal).", "Lock và Unlock.", "Push và Pop."], correct: 1, explanation: "DOWN (P) là xin tài nguyên: Kiểm tra semaphore, nếu >0 thì trừ đi 1 và đi tiếp. Nếu =0 thì Đi ngủ. UP (V) là trả tài nguyên: Tăng semaphore lên 1. Nếu có ai đang ngủ chờ tài nguyên này, HĐH sẽ đánh thức họ dậy.", citation: "Chương 2.3.5: Semaphores." },
+            { category: "Semaphore & Mutex", q: "Điểm sống còn (Mấu chốt) khiến Semaphore hoạt động đúng đắn và không bao giờ bị Race Condition là gì?", options: ["Nó được viết bằng ngôn ngữ Java.", "Các hàm DOWN và UP được HĐH thiết kế để chạy một cách NGUYÊN TỬ (Atomic). Một khi tiến trình đã bắt đầu hàm DOWN, không ai có thể ngắt nó cho đến khi nó kiểm tra, trừ biến hoặc đi ngủ xong.", "Nó lưu dữ liệu trên ổ cứng.", "Nó dùng mạng Wifi."], correct: 1, explanation: "Tính Atomic (Không thể chia cắt) của DOWN/UP được OS đảm bảo bằng cách Tắt ngắt (trên 1 CPU) hoặc dùng lệnh TSL (trên Multicore) trong chớp nhoáng khi cập nhật biến số nguyên của Semaphore. Người dùng chỉ việc xài mà không lo lỗi.", citation: "Chương 2.3.5: Semaphores." },
+            { category: "Semaphore & Mutex", q: "Semaphore nhị phân (Binary Semaphore) có giá trị chỉ là 0 hoặc 1, thường được sử dụng cho mục đích gì?", options: ["Để đếm số lượng file.", "Đóng vai trò thay thế cho Khóa loại trừ lẫn nhau (Mutual Exclusion), bảo vệ miền tới hạn.", "Chờ đĩa cứng khởi động.", "Đồng bộ hóa mạng."], correct: 1, explanation: "Khi khởi tạo Binary Semaphore = 1. Tiến trình đầu gọi DOWN -> biến thành 0 và vào miền. Tiến trình hai gọi DOWN -> thấy 0 bèn đi ngủ. Khi tiến trình một ra, gọi UP -> đánh thức tiến trình hai. Nó hoạt động như một cái Khóa (Lock).", citation: "Chương 2.3.5: Semaphores." },
+            { category: "Semaphore & Mutex", q: "Một công cụ đồng bộ hóa rút gọn từ Semaphore, ĐẶC BIỆT THIẾT KẾ chỉ để quản lý khóa loại trừ lẫn nhau (Mutual Exclusion) cho luồng (Thread), được gọi là gì?", options: ["Spooler.", "Mutex (Mutual Exclusion object).", "Spinlock.", "Socket."], correct: 1, explanation: "Mutex là một biến thể cực nhẹ của Semaphore nhị phân. Không cần đếm số lượng phức tạp, Mutex chỉ có 2 trạng thái: Khóa (Locked) và Mở (Unlocked). Nó cực kỳ phổ biến trong thư viện Pthreads (pthread_mutex).", citation: "Chương 2.3.6: Mutexes." },
+            { category: "Semaphore & Mutex", q: "Trong việc cài đặt Mutex ở không gian User (User-space), hàm `mutex_lock` sử dụng lệnh TSL phần cứng. Khác biệt của nó với Busy Waiting (Spinlock) là gì?", options: ["Không có gì khác biệt.", "Thay vì quay vòng lặp vô tận (Busy wait) đốt CPU, khi TSL báo khóa đang đóng, tiến trình sẽ gọi hàm `thread_yield()` để TỰ NGUYỆN NHƯỜNG CPU cho luồng khác chạy.", "Nó tắt máy ngay lập tức.", "Nó chạy ngầm trong GPU."], correct: 1, explanation: "Đây là sự tối ưu tuyệt vời. Lấy TSL test khóa. Vào không được? Không quay vòng vòng tốn điện nữa! Gọi lệnh `yield()` (hoặc gọi System call Sleep đối với OS) để cất luồng này đi, đưa CPU cho kẻ khác xài.", citation: "Chương 2.3.6: Mutexes (Implementation)." },
+            { category: "Semaphore & Mutex", q: "Khi Pthreads của UNIX sử dụng hàm `pthread_cond_wait()` (Condition Variable), nó ĐÒI HỎI BẮT BUỘC phải đi kèm với công cụ nào?", options: ["Một Mutex đang được khóa (Locked).", "Một biến Semaphore.", "Một ổ đĩa trống.", "Quyền Root."], correct: 0, explanation: "Condition Variable (Biến điều kiện) luôn phải ghép cặp với Mutex. Khi luồng thấy thiếu dữ liệu, nó gọi `pthread_cond_wait(&cond, &mutex)`. Hàm này sẽ tự động thả (Unlock) cái Mutex ra và đưa luồng vào giấc ngủ một cách NGUYÊN TỬ.", citation: "Chương 2.3.6: Mutexes in Pthreads." },
+            { category: "Semaphore & Mutex", q: "Khái niệm 'Futex' (Fast Userspace Mutex) trong Linux ra đời nhằm mục đích gì?", options: ["Diệt virus nhanh hơn.", "Kết hợp sự nhẹ nhàng của Spinlock (Không cần gọi Kernel nếu chưa có ai giành khóa) với tính năng đi ngủ của Mutex (Gọi Kernel để Block nếu xảy ra tranh giành), giảm thiểu tối đa các lệnh Trap tốn kém.", "Khóa thư mục hệ thống.", "Tăng tốc độ truy cập RAM."], correct: 1, explanation: "Futex (Fast User Mutex): 99% thời gian không ai tranh khóa với bạn, bạn chỉ dùng lệnh TSL ở User Space lấy khóa trong 1 nano-giây. Chỉ khi có đứa khác đang giữ khóa, Futex mới dùng System Call (Trap) gọi HĐH nhờ Block mình lại.", citation: "Chương 2.3.6: Futexes." },
+            { category: "Semaphore & Mutex", q: "Trong Pthreads, hàm `pthread_mutex_trylock()` có ý nghĩa gì khác với `pthread_mutex_lock()`?", options: ["Nó bẻ khóa bằng bạo lực.", "Nó cố gắng lấy khóa. Nếu khóa đã bị đóng, thay vì đi ngủ chờ đợi (như lock), nó sẽ TRẢ VỀ MÃ LỖI NGAY LẬP TỨC để luồng có thể đi làm việc khác.", "Nó khóa tất cả các luồng.", "Nó thử nghiệm xem mutex có hoạt động không."], correct: 1, explanation: "Đây là cách lập trình Non-blocking. Luồng thử vặn tay nắm cửa. Khóa rồi à? Okay tôi không rảnh đứng chờ đâu, tôi đi uống cà phê (làm việc khác) lát quay lại thử sau.", citation: "Chương 2.3.6: Mutexes in Pthreads." },
+
+            // ================== PHẦN 4: MONITOR & MESSAGE PASSING (31-40) ==================
+            { category: "Monitor & Message Passing", q: "Dù Semaphore rất mạnh mẽ, nhưng tại sao lập trình viên lại dễ tạo ra lỗi Deadlock khi sử dụng nó?", options: ["Vì Semaphore không tương thích với C.", "Vì lập trình viên phải tự gọi DOWN và UP thủ công. Nếu đổi thứ tự gọi DOWN(mutex) và DOWN(empty) sai lệch một chút, hệ thống sẽ bị Deadlock vĩnh viễn.", "Vì Semaphore tốn quá nhiều CPU.", "Vì HĐH thường từ chối Semaphore."], correct: 1, explanation: "Semaphore như một con dao sắc. Trong bài toán Producer-Consumer, nếu Producer gọi DOWN khóa Mutex trước, rồi mới gọi DOWN kiểm tra Kho rỗng (Empty) và thấy kho ĐẦY. Nó đi ngủ trong khi vẫn ôm chặt Mutex. Consumer không lấy được Mutex, hệ thống treo vĩnh viễn.", citation: "Chương 2.3.7: Monitors." },
+            { category: "Monitor & Message Passing", q: "Để cứu lập trình viên khỏi thảm họa Semaphore, Hoare và Brinch Hansen đã phát minh ra một tính năng CẤP CAO của Ngôn ngữ lập trình. Nó tên là gì?", options: ["C++ Classes.", "Monitor (Bộ giám sát).", "Exception Handling.", "Garbage Collector."], correct: 1, explanation: "Monitor là một cấu trúc của ngôn ngữ lập trình (như Java `synchronized`). Nó gom các biến và thủ tục vào một cục. Điều kỳ diệu: Trình biên dịch (Compiler) sẽ tự động chèn khóa Mutex vào. Đảm bảo chỉ có DUY NHẤT 1 luồng được chạy bên trong Monitor vào mọi thời điểm.", citation: "Chương 2.3.7: Monitors." },
+            { category: "Monitor & Message Passing", q: "Điểm yếu lớn nhất của Monitor là gì?", options: ["Nó chạy quá chậm.", "Nó bị giới hạn bởi độ phân giải màn hình.", "Nó là một cấu trúc của NGÔN NGỮ LẬP TRÌNH (như Java, Concurrent Pascal). Nếu bạn lập trình bằng ngôn ngữ C (ngôn ngữ phổ biến nhất viết OS), bạn KHÔNG THỂ dùng Monitor.", "Nó chỉ chạy trên Linux."], correct: 2, explanation: "C và C++ (ở chuẩn cũ) không có khái niệm Monitor tích hợp sẵn. Monitor phụ thuộc vào Compiler. Hơn nữa, nó chỉ giải quyết đồng bộ bộ nhớ dùng chung, không xài được cho nhiều máy tính trong mạng phân tán.", citation: "Chương 2.3.7: Monitors." },
+            { category: "Monitor & Message Passing", q: "Trong cấu trúc Monitor, nếu một luồng đang ở bên trong nhưng phát hiện thiếu dữ liệu (cần đi ngủ), nó dùng cấu trúc nào để ngủ mà KHÔNG KHÓA CỬA Monitor?", options: ["Gọi hàm Sleep().", "Condition Variables (Biến điều kiện) với hai phép toán WAIT và SIGNAL.", "Semaphore UP.", "Biến toàn cục."], correct: 1, explanation: "Luồng gọi `WAIT(condition)`. Lập tức nó bị đóng băng, và PHÉP MÀU: Cửa Monitor tự động mở ra cho phép luồng khác vào tiếp. Khi luồng khác lấy được dữ liệu, nó gọi `SIGNAL(condition)` để đánh thức luồng đang ngủ dậy.", citation: "Chương 2.3.7: Monitors." },
+            { category: "Monitor & Message Passing", q: "Khi các tiến trình không chạy chung trên một máy, mà nằm rải rác trên nhiều máy tính qua Mạng Internet (Distributed Systems), ta BẮT BUỘC phải dùng cơ chế IPC nào?", options: ["Semaphore.", "Monitor.", "Message Passing (Truyền thông điệp) qua hai lệnh Send và Receive.", "Shared Memory."], correct: 2, explanation: "Hai máy tính khác nhau không thể có chung một vùng nhớ RAM để dùng Semaphore hay Monitor. Chúng chỉ có cách đóng gói dữ liệu thành các gói tin (Message) và gửi qua mạng (LAN/WAN) thông qua cơ chế Message Passing.", citation: "Chương 2.3.8: Message Passing." },
+            { category: "Monitor & Message Passing", q: "Trong Message Passing, vấn đề lớn nhất khi truyền qua mạng là gói tin bị mất (Message Lost). Hệ điều hành giải quyết điều này bằng cách nào?", options: ["Gửi đi gửi lại vô hạn lần.", "Ngắt mạng.", "Sử dụng cơ chế Acknowledgment (Báo nhận / Báo hiệu ACKs). Nhận được tin phải gửi tin phản hồi. Nếu gửi đi mà không nhận được ACK sau khoảng thời gian Timeout, bên gửi sẽ GỬI LẠI gói tin.", "Mã hóa gói tin."], correct: 2, explanation: "Đây là nguyên lý nền tảng của giao thức TCP. Người gửi giữ một bản sao, đặt đồng hồ hẹn giờ. Nếu hết giờ không thấy bên kia hồi âm (ACK), giả định tin bị mất và gửi lại.", citation: "Chương 2.3.8: Message Passing (Design Issues)." },
+            { category: "Monitor & Message Passing", q: "Nếu gói tin gửi lại (Retransmission) vô tình trùng với gói tin đến chậm ban đầu, bên nhận sẽ nhận 2 gói tin giống hệt nhau. Giải pháp của HĐH là gì?", options: ["Xóa cả hai gói tin.", "Sử dụng Số thứ tự (Sequence Numbers) nhúng vào gói tin. Nếu bên nhận thấy gói tin có số thứ tự đã từng nhận, nó sẽ ném gói tin trùng lặp đi.", "Chặn IP của bên gửi.", "Gộp hai gói thành một."], correct: 1, explanation: "Sequence number giúp phân biệt tin nhắn. Nếu tôi nhận được tin nhắn số 5 rồi, mà một lúc sau lại nhận thêm một tin nhắn số 5 nữa, tôi biết ngay đó là hàng gửi lại (duplicate) và sẽ vứt nó vào sọt rác.", citation: "Chương 2.3.8: Message Passing (Design Issues)." },
+            { category: "Monitor & Message Passing", q: "Khái niệm 'Rendezvous' (Cuộc hẹn) trong Message Passing mang ý nghĩa gì?", options: ["Gửi tin nhắn bí mật.", "Đây là mô hình KHÔNG DÙNG BỘ ĐỆM. Nếu hàm Receive gọi trước, nó bị block chờ Send. Nếu hàm Send gọi trước, nó bị block chờ Receive. Chúng phải GẶP NHAU cùng lúc thì thông điệp mới được trao tay.", "Hẹn giờ khởi động lại máy.", "Lưu tin nhắn vào hộp thư."], correct: 1, explanation: "Giống như trao đổi tù binh. Không có kho trung gian (Mailbox). Anh gửi đứng cầm gói tin giơ ra chờ. Anh nhận phải chạy đến lấy. Nếu một anh đến sớm phải đứng chờ (block) anh kia. Rất an toàn và dễ đồng bộ.", citation: "Chương 2.3.8: Message Passing (Design Issues)." },
+            { category: "Monitor & Message Passing", q: "Một công cụ đồng bộ hóa thường dùng cho các hệ thống tính toán khoa học đa luồng (như chia ma trận ra làm 4 phần, yêu cầu cả 4 phải tính xong mới được qua bước tiếp theo) có tên là gì?", options: ["Semaphore.", "Mutex.", "Barrier (Rào chắn).", "Pipes."], correct: 2, explanation: "Barrier giống như điểm danh học sinh trước khi lên xe buýt. Khi một luồng chạy xong phần việc của Phase 1, nó gọi Barrier. Nó sẽ bị Block. Nó chờ cho đến khi TẤT CẢ các luồng khác đều hoàn thành và đụng vào Barrier, rào chắn mới hạ xuống cho cả đám đi tiếp sang Phase 2.", citation: "Chương 2.3.9: Barriers." },
+            { category: "Monitor & Message Passing", q: "Hệ thống RCU (Read-Copy-Update) trong nhân Linux được thiết kế siêu phàm để tối ưu hóa cho kịch bản nào?", options: ["Môi trường có quá nhiều thao tác Ghi (Writers).", "Hệ thống chỉ có 1 CPU.", "Môi trường mà thao tác Đọc (Readers) diễn ra quá nhiều so với thao tác Ghi (Writers). Độc giả có thể đọc MÀ KHÔNG CẦN BẤT KỲ KHÓA NÀO (Zero locks), siêu nhanh.", "Không gian người dùng (User space)."], correct: 2, explanation: "Trong OS, nhiều dữ liệu cấu hình thường xuyên được đọc nhưng rất hiếm khi sửa. RCU cho phép hàng ngàn độc giả đọc đồng thời tốc độ bàn thờ không cần Lock. Người Ghi sẽ copy bản đó ra, sửa bản copy, và thay thế con trỏ (Atomic) về bản mới. Các bản cũ sẽ được dọn rác (Grace period) sau khi mọi độc giả cũ đọc xong.", citation: "Chương 2.3.9: Read-Copy-Update (Advanced)." },
+
+            // ================== PHẦN 5: CÁC BÀI TOÁN KINH ĐIỂN (41-50) ==================
+            { category: "Các Bài Toán Kinh Điển", q: "Bài toán 'Người sản xuất - Người tiêu dùng' (Producer-Consumer) hay còn gọi là Bounded-Buffer, thường sử dụng 3 biến Semaphore nào để đồng bộ?", options: ["Read, Write, Execute.", "Full, Empty, Mutex.", "Start, Stop, Wait.", "Lock, Unlock, Yield."], correct: 1, explanation: "Empty (Kho còn bao chỗ trống, khởi tạo = N). Full (Kho có bao nhiêu hàng, khởi tạo = 0). Mutex (Bảo vệ tính toàn vẹn của kho, khởi tạo = 1).", citation: "Chương 2.4.1: The Producer-Consumer Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Trong Producer-Consumer, nếu đổi thứ tự gọi `DOWN(&mutex)` LÊN TRƯỚC `DOWN(&empty)` ở phía Producer, chuyện tồi tệ gì sẽ xảy ra khi kho đã ĐẦY?", options: ["Dữ liệu bị xóa.", "Producer khóa Mutex, sau đó gọi DOWN(empty) và BỊ NGỦ do kho đầy. Tuy nhiên nó vẫn cầm chìa khóa Mutex. Consumer muốn lấy hàng để tạo chỗ trống, gọi DOWN(mutex) và cũng BỊ NGỦ. Hệ thống Deadlock!", "Kho tự động mở rộng.", "Không có chuyện gì."], correct: 1, explanation: "Đây là nguyên lý cốt lõi: KHÔNG BAO GIỜ được mang chìa khóa Mutex đi ngủ chờ tài nguyên khác. Phải kiểm tra tài nguyên trước (Empty/Full), có hàng/chỗ rồi mới được khóa Mutex để cất/lấy hàng.", citation: "Chương 2.4.1: The Producer-Consumer Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Bài toán 'Triết gia ăn tối' (Dining Philosophers) do Dijkstra đề xuất. Mỗi triết gia cần 2 chiếc nĩa (trái và phải) để ăn mỳ Ý. Nếu quy tắc là 'Mỗi người cầm nĩa TRÁI của mình lên trước', điều gì sẽ xảy ra?", options: ["Họ sẽ ăn rất nhanh.", "Tất cả cùng cầm nĩa TRÁI lên cùng một lúc. Mọi nĩa đều bị giữ. Tất cả quay sang lấy nĩa PHẢI nhưng không ai có nĩa phải. Tất cả đứng chờ nhau vĩnh viễn (Deadlock).", "Nĩa sẽ bị gãy.", "Hệ thống sẽ hoạt động trơn tru."], correct: 1, explanation: "Đây là bài toán kinh điển về Deadlock tài nguyên. Vòng tròn chờ đợi lẫn nhau. Mỗi người giữ 1 tài nguyên và chờ người bên cạnh nhả tài nguyên thứ 2.", citation: "Chương 2.4.2: The Dining Philosophers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Một giải pháp ngây thơ cho bài toán Triết gia ăn tối là: 'Lấy nĩa trái, kiểm tra nĩa phải, nếu nĩa phải không có thì BỎ nĩa trái xuống, chờ một lát rồi lấy lại'. Lỗi nghiêm trọng của thuật toán này là gì?", options: ["Nó giải quyết được Deadlock.", "Nó vi phạm quy tắc chia sẻ thời gian.", "Gây ra hiện tượng Starvation (Chết đói do đồng bộ hóa kỳ lạ). Tất cả cùng lấy nĩa trái, cùng bỏ xuống, cùng đợi 1ms, cùng lấy lại... Vòng lặp vô tận mà không ai được ăn.", "Nó làm hỏng biến Semaphore."], correct: 2, explanation: "Tuy tránh được Deadlock (bế tắc cứng), nhưng nó lại dính Livelock (bế tắc động / Starvation). Giống như 2 người nhường đường nhau ngoài cửa, cả 2 cùng né sang trái, rồi cùng né sang phải, nhảy múa vô tận không ai qua được.", citation: "Chương 2.4.2: The Dining Philosophers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Giải pháp hoàn hảo của Tanenbaum cho bài toán Triết gia sử dụng cấu trúc Mảng trạng thái (State Array). Các trạng thái đó là gì?", options: ["WAITING, RUNNING.", "SLEEPING, AWAKE.", "THINKING (Đang nghĩ), HUNGRY (Đói - Đang muốn lấy nĩa), EATING (Đang ăn).", "LEFT, RIGHT."], correct: 2, explanation: "Mấu chốt của Tanenbaum: Triết gia `i` chỉ chuyển sang EATING nếu cậu ấy đang HUNGRY, VÀ hai người hàng xóm `(i-1)` và `(i+1)` KHÔNG PHẢI đang EATING. Cậu ta sẽ lấy LUÔN 2 NĨA cùng lúc bằng thao tác được bọc trong Mutex.", citation: "Chương 2.4.2: The Dining Philosophers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Trong thuật toán của Tanenbaum cho Triết gia ăn tối, khi Triết gia `i` ĂN XONG và đặt nĩa xuống, cậu ta thực hiện hành động cực kỳ nhân văn nào?", options: ["Rửa nĩa.", "Ngủ.", "Cậu ta chuyển trạng thái về THINKING, ĐỒNG THỜI đánh thức người hàng xóm bên TRÁI và bên PHẢI (kiểm tra xem họ có đang ĐÓI và đủ điều kiện ăn không).", "Giành lấy đĩa mỳ của người khác."], correct: 2, explanation: "Người ăn xong có trách nhiệm xem 2 người kế bên có đang chờ nĩa không. Nếu có (đang HUNGRY), người đó sẽ gọi `UP` để đánh thức hàng xóm dậy cầm lấy nĩa. Giải pháp này chặn đứng cả Deadlock và Starvation.", citation: "Chương 2.4.2: The Dining Philosophers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Bài toán 'Người Đọc và Người Ghi' (The Readers and Writers Problem) áp dụng cho hệ thống Cơ sở dữ liệu. Luật cốt lõi của bài toán này là gì?", options: ["Không cho phép ai ghi dữ liệu.", "Cho phép NHIỀU người ĐỌC cùng truy cập dữ liệu cùng lúc, nhưng nếu có người GHI, người đó phải truy cập ĐỘC QUYỀN (không ai khác được đọc hay ghi).", "Người Ghi ưu tiên cao hơn Người Đọc.", "Người Đọc và Người Ghi có thể làm việc cùng lúc trên cùng 1 dòng."], correct: 1, explanation: "Nếu dữ liệu là cái thời khóa biểu: Cả trường có thể mở ra xem (Đọc) cùng lúc chẳng sao cả. Nhưng khi giáo viên sửa TKB (Ghi), giáo viên phải khóa cái bảng lại, không cho ai xem lúc đang sửa dở dang để tránh đọc nhầm.", citation: "Chương 2.4.3: The Readers and Writers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Trong thuật toán chuẩn bảo vệ luồng Người Đọc (Readers), có một biến số nguyên `rc` (Read Count) để đếm số lượng người đang đọc. Người đọc nào có trách nhiệm KHÓA ĐỘC QUYỀN (chặn luồng Ghi)?", options: ["Người đọc thứ 10.", "Tất cả người đọc đều phải khóa luồng Ghi.", "NGƯỜI ĐỌC ĐẦU TIÊN (khi `rc` từ 0 lên 1) là người sẽ thực hiện thao tác KHÓA (DOWN) hệ thống ghi. Những người đọc thứ 2, 3... chỉ việc đi vào.", "Người đọc cuối cùng."], correct: 2, explanation: "Giống bật công tắc đèn. Người đầu tiên bước vào phòng sẽ bật đèn (khóa cửa luồng Ghi). Người thứ 2 vào không cần bật đèn nữa. Chỉ cần đèn đang sáng, cấm luồng Ghi chui vào.", citation: "Chương 2.4.3: The Readers and Writers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Tương tự, trong bài toán Người Đọc - Người Ghi, ai là người có trách nhiệm MỞ KHÓA cho luồng Ghi?", options: ["Hệ điều hành.", "Người ghi tự phá khóa.", "Người đọc đầu tiên.", "NGƯỜI ĐỌC CUỐI CÙNG rờI khỏi (khi `rc` từ 1 về 0). Khi không còn bất kỳ người đọc nào, nó mới mở khóa (UP) cho phép luồng Ghi vào làm việc."], correct: 3, explanation: "Người cuối cùng rời phòng sẽ có trách nhiệm tắt đèn (Mở khóa hệ thống Ghi). Chừng nào vẫn còn 1 người nán lại đọc, luồng Ghi vẫn phải đứng đợi bên ngoài.", citation: "Chương 2.4.3: The Readers and Writers Problem." },
+            { category: "Các Bài Toán Kinh Điển", q: "Nhược điểm của thuật toán Người Đọc - Người Ghi cơ bản ở trên (Ưu tiên người đọc) là gì?", options: ["Nó làm hỏng CSDL.", "Nếu có một luồng người Đọc cứ kéo đến liên tục không ngớt, thì luồng Ghi sẽ BỊ CHẾT ĐÓI (Starvation) vì không bao giờ `rc` tụt về 0 để mở khóa.", "Số người đọc bị giới hạn ở mức 100.", "Nó tốn quá nhiều Semaphore."], correct: 1, explanation: "Dòng người Đọc cứ nối đuôi nhau vào, người Ghi phải đứng chờ mòn mỏi. Trong CSDL thực tế, người ta phải tùy chỉnh ưu tiên, khi thấy luồng Ghi chờ lâu, luồng Đọc mới đến sẽ bị chặn lại để nhường cho luồng Ghi xử lý.", citation: "Chương 2.4.3: The Readers and Writers Problem." }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+
+            quizData.forEach((qObj) => {
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-zinc-900 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${questionCounter}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4 clrs-proof";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích (CLRS Style):</h4>
+                    <p>${qObj.explanation}</p>
+                    <p class="text-sm font-mono text-zinc-500 mt-3"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

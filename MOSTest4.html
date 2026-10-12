@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Đề Tổng Hợp Số 4 (Chuyên sâu Chương 2)</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax cho Công thức Toán -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .option-btn { transition: all 0.2s ease; position: relative; }
+        .option-btn.selected-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; font-weight: 500; }
+        .option-btn.selected-wrong { background-color: #fef2f2 !important; border-color: #ef4444 !important; color: #7f1d1d !important; }
+        .option-btn.show-correct { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #14532d !important; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .answer-block {
+            display: none; margin-top: 1.5rem; padding: 1.5rem;
+            background-color: #f4f4f5; border-left: 2px solid #52525b; 
+            color: #3f3f46; font-size: 0.95rem; line-height: 1.6;
+        }
+        .answer-block.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .clrs-proof { position: relative; padding-left: 0.5rem; }
+        .clrs-proof::after {
+            content: "■"; display: block; text-align: right; margin-top: 0.5rem;
+            font-size: 0.8rem; color: #71717a;
+        }
+        
+        .calc-step { background: #fff; padding: 16px; border-left: 4px solid #000; margin: 10px 0; font-family: 'Inter', sans-serif; font-size: 0.95em; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        code { font-family: 'JetBrains Mono', monospace; background-color: #e4e4e7; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; color: #b91c1c; }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-zinc-900 text-white flex items-center justify-center font-bold font-mono">OS</div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-zinc-900 leading-none">Đề Thi Tổng Hợp Số 4</h1>
+                    <p class="text-xs text-zinc-500 mt-1">Chuyên sâu Tiến trình, Luồng & Định thời (Chương 2)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="score-display" class="font-mono font-bold text-zinc-700 bg-zinc-100 px-3 py-1 rounded shadow-inner">Điểm: 0/30</span>
+                <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors rounded">
+                    <i class="fa-solid fa-print mr-2"></i> In / Lưu PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <aside class="w-full lg:w-72 flex-shrink-0 no-print">
+            <div class="sticky top-24 bg-white p-5 border border-zinc-200 rounded-lg shadow-sm">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Cấu trúc Đề số 4</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-Chương 1: Cơ sở Hệ thống" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">1. Cơ sở Hệ thống (4 câu)</a>
+                    <a href="#section-Chương 2: Đa Luồng & Đa Tiến Trình" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">2. Đa Luồng & Tiến Trình (8 câu)</a>
+                    <a href="#section-Chương 2: IPC & Đồng Bộ Chuyên Sâu" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">3. IPC & Đồng Bộ (7 câu)</a>
+                    <a href="#section-Chương 2: Chiến lược Định thời" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4. Chiến lược Định thời (5 câu)</a>
+                    <a href="#section-Bài tập Tính toán Tự luận" class="text-sm font-bold text-blue-600 hover:text-blue-800 py-1.5 transition-colors">5. Tính toán Phân rã Luồng (6 câu)</a>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12 rounded-lg shadow-sm">
+                <div id="questions-list" class="space-y-12"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Cấu trúc Data JSON chuẩn, dùng chuỗi kép (") và tránh tuyệt đối backticks.
+        const quizData = [
+            // ================== PHẦN 1: CHƯƠNG 1 (4 Câu) ==================
+            {
+                category: "Chương 1: Cơ sở Hệ thống",
+                q: "Khái niệm 'Multiprogramming' (Đa chương trình) tập trung vào việc chia sẻ tài nguyên nào để tăng hiệu suất?",
+                options: [
+                    "Chia sẻ băng thông mạng Internet.",
+                    "Chia sẻ bộ nhớ RAM để chứa nhiều chương trình, giúp CPU chuyển đổi công việc ngay khi có chương trình bị chặn bởi I/O.",
+                    "Sử dụng nhiều nhân CPU vật lý cùng lúc.",
+                    "Chạy các chương trình không cần RAM."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Multiprogramming là khả năng của HĐH nạp nhiều tiến trình vào bộ nhớ chính. Mục tiêu là tối đa hóa hiệu suất CPU (CPU Utilization).<br><br><b>2. Phân tích & Dân dã:</b> Trước đây CPU phải đợi máy in chạy xong mới làm việc khác (lãng phí thời gian). Với Multiprogramming, HĐH nhét 3 ứng dụng vào RAM. Ứng dụng 1 đi in tài liệu (I/O Wait), CPU lập tức nhảy sang tính toán cho Ứng dụng 2.",
+                citation: "Chương 1.2.3: Multiprogramming."
+            },
+            {
+                category: "Chương 1: Cơ sở Hệ thống",
+                q: "Trong quá trình System Call, thanh ghi nào của CPU KHÔNG ĐƯỢC PHÉP cho chương trình User tự do sửa đổi trực tiếp?",
+                options: [
+                    "Thanh ghi đa năng (General Purpose Registers - EAX, EBX).",
+                    "Bộ đếm chương trình (Program Counter - PC).",
+                    "Thanh ghi Trạng thái chương trình (PSW) - Cụ thể là Mode bit.",
+                    "Thanh ghi con trỏ ngăn xếp (Stack Pointer - SP)."
+                ],
+                correct: 2,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Mode bit (nằm trong PSW) quyết định CPU đang ở User Mode (bị giới hạn) hay Kernel Mode (đặc quyền). Chỉ phần cứng thông qua Ngắt/Trap mới có quyền đổi bit này.<br><br><b>2. Phân tích & Dân dã:</b> Nếu một ứng dụng thường (User) được phép tự sửa Mode Bit thành 0 (Kernel), nó sẽ lập tức tự phong mình làm Vua hệ thống, chiếm quyền kiểm soát toàn bộ máy tính. Do đó, phần cứng khóa chết khả năng này.",
+                citation: "Chương 1.3: Dual-Mode Protection."
+            },
+            {
+                category: "Chương 1: Cơ sở Hệ thống",
+                q: "Kiến trúc hệ điều hành nào đặt tất cả các module (quản lý bộ nhớ, định thời, hệ thống file) vào trong một tập tin nhị phân khổng lồ chạy duy nhất ở Kernel Mode?",
+                options: [
+                    "Microkernel (Vi nhân).",
+                    "Layered System (Phân lớp).",
+                    "Monolithic System (Nhân nguyên khối).",
+                    "Client-Server System."
+                ],
+                correct: 2,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Monolithic là kiến trúc truyền thống (như Linux, MS-DOS cũ), toàn bộ chức năng của OS được nhét chung vào một không gian hạt nhân duy nhất.<br><br><b>2. Phân tích & Dân dã:</b> Monolithic giống như một xưởng sản xuất mà Giám đốc, Kế toán, Bảo vệ, Công nhân đều ngồi chung một phòng siêu lớn không có vách ngăn. Giao tiếp siêu nhanh, nhưng chỉ cần một người (ví dụ module File) hút thuốc gây cháy, cả xưởng sẽ sụp đổ (Kernel Panic / Blue Screen).",
+                citation: "Chương 1.6.1: Monolithic Systems."
+            },
+            {
+                category: "Chương 1: Cơ sở Hệ thống",
+                q: "Vectơ ngắt (Interrupt Vector) chứa thông tin gì?",
+                options: [
+                    "Mã nguồn của hệ điều hành.",
+                    "Mảng chứa các địa chỉ bộ nhớ (con trỏ hàm) trỏ đến các Trình phục vụ ngắt (Interrupt Service Routines - ISR) tương ứng với từng loại ngắt.",
+                    "Danh sách các tiến trình đang bị lỗi.",
+                    "Dữ liệu được lưu trong bộ nhớ Cache."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Khi có ngắt số X xảy ra, CPU lấy số X làm chỉ mục tra cứu trong bảng Interrupt Vector để tìm ra địa chỉ của đoạn code (ISR) có nhiệm vụ giải quyết ngắt X đó.<br><br><b>2. Phân tích & Dân dã:</b> Giống như cuốn danh bạ điện thoại khẩn cấp. Phím 1 (Ngắt bàn phím) -> Tra danh bạ ra số ông cảnh sát A. Phím 2 (Ngắt ổ cứng) -> Tra danh bạ ra số ông cứu hỏa B. Bảng danh bạ đó chính là Interrupt Vector.",
+                citation: "Chương 1.4: Interrupt Handling."
+            },
+
+            // ================== PHẦN 2: CHƯƠNG 2 (ĐA LUỒNG & ĐA TIẾN TRÌNH) (8 Câu) ==================
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Khi một tiến trình tạo ra một tiến trình con qua hàm <code>fork()</code>, tiến trình con KHÔNG ĐƯỢC kế thừa tài nguyên nào từ cha?",
+                options: [
+                    "Các tập tin (File descriptors) đang mở.",
+                    "Mã chương trình (Text segment).",
+                    "Không gian bộ nhớ toàn cục và heap.",
+                    "Mã định danh (Process ID - PID)."
+                ],
+                correct: 3,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> <code>fork()</code> tạo ra bản sao giống hệt tiến trình cha về không gian bộ nhớ, tập tin đang mở. NHƯNG hệ điều hành bắt buộc phải cấp cho đứa con một số CMND mới (PID mới) để quản lý độc lập.<br><br><b>2. Phân tích & Dân dã:</b> Người con kế thừa toàn bộ nhà cửa, tài sản, các hợp đồng đang làm dở của người cha. Nhưng người con phải có thẻ Căn cước công dân (PID) của riêng mình, không thể xài chung CMND với cha được.",
+                citation: "Chương 2.1.1: Process Creation."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Trong mô hình Luồng Mức Người Dùng (User-Level Threads - ULT), nếu Luồng 1 thực hiện một thao tác đọc file từ ổ cứng (I/O system call), điều gì sẽ xảy ra với Luồng 2 (đang rảnh rỗi chờ tính toán) trong cùng tiến trình đó?",
+                options: [
+                    "Luồng 2 sẽ lập tức chiếm CPU và chạy.",
+                    "Kernel sẽ nhận ra Luồng 2 đang rảnh và cấp CPU cho nó.",
+                    "Toàn bộ tiến trình sẽ bị Kernel chuyển sang trạng thái Blocked. Luồng 2 cũng bị kẹt không thể chạy dù đang rảnh.",
+                    "Luồng 2 bị xóa khỏi hệ thống."
+                ],
+                correct: 2,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Vì Kernel không hề biết sự tồn tại của ULT (nó chỉ thấy 1 tiến trình), nên khi ULT 1 gọi System Call làm chặn (block) tiến trình, Kernel sẽ tước CPU của cả tiến trình đó.<br><br><b>2. Phân tích & Dân dã:</b> Kernel là ông sếp, Tiến trình là 1 team, ULT là các nhân viên trong team. Sếp chỉ giao việc cho Team (không biết nhân viên bên trong). Nhân viên 1 (Luồng 1) lên báo sếp 'Cho em đi mua vật tư (Đọc đĩa)'. Sếp lập tức đánh dấu 'Cả Team này đang đi vắng' và dẹp dự án sang một bên. Nhân viên 2 ngồi ở nhà đành chơi xơi nước vì bị sếp thu hồi tài nguyên mất rồi.",
+                citation: "Chương 2.2.4: Implementing Threads in User Space."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Sự khác biệt cốt lõi về 'Chia sẻ tài nguyên' giữa Đa tiến trình (Multiprocessing) và Đa luồng (Multithreading) là gì?",
+                options: [
+                    "Tiến trình chia sẻ RAM, Luồng không chia sẻ gì cả.",
+                    "Các Tiến trình hoàn toàn ĐỘC LẬP về bộ nhớ (nhà ai nấy ở). Các Luồng trong cùng một tiến trình CHIA SẺ chung không gian bộ nhớ ảo, biến toàn cục và file (ở chung nhà).",
+                    "Luồng an toàn hơn Tiến trình vì không bao giờ có lỗi.",
+                    "Tiến trình dùng chung CPU, Luồng có CPU riêng."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> OS cách ly nghiêm ngặt không gian bộ nhớ của các tiến trình (Memory Protection). Ngược lại, các luồng sinh ra trong cùng một tiến trình chia sẻ chung toàn bộ Address Space (Data, Heap, Code).<br><br><b>2. Phân tích & Dân dã:</b> Đa tiến trình như việc bạn có 2 ngôi nhà riêng biệt, nhà A muốn vay tiền nhà B thì phải chuyển khoản qua ngân hàng (chậm). Đa luồng như 2 anh em sống chung 1 căn hộ, ví tiền để trên bàn (Shared Memory), ai lấy xài cũng được (rất nhanh, nhưng dễ cãi nhau nếu cùng giành 1 tờ tiền - Race condition).",
+                citation: "Chương 2.2.2: The Classical Thread Model."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Mặc dù các Luồng (Threads) chia sẻ chung bộ nhớ, nhưng thành phần nào bắt buộc phải CẤP RIÊNG cho từng Luồng để chúng chạy độc lập?",
+                options: [
+                    "Bảng phân trang (Page Table).",
+                    "Mã nguồn (Text Segment).",
+                    "Bộ đếm chương trình (Program Counter) và Ngăn xếp (Stack).",
+                    "Biến toàn cục (Global Variables)."
+                ],
+                correct: 2,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Mỗi luồng là một dòng thực thi độc lập. Để gọi các hàm khác nhau, chúng cần Stack riêng để chứa biến cục bộ (Local variables). Để biết đang chạy đến dòng lệnh nào, chúng cần PC riêng.<br><br><b>2. Phân tích & Dân dã:</b> Dù 2 anh em (Luồng) ở chung nhà (Process), đọc chung tủ sách (Code), xài chung ví tiền (Biến toàn cục), nhưng mỗi người vẫn phải có cái 'Đầu' riêng để nhớ mình đang làm việc gì (PC), và cái 'Balo' riêng để đựng đồ lặt vặt cá nhân mang theo (Stack).",
+                citation: "Chương 2.2.2: Thread Usage."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Hàm <code>execve()</code> trong chuẩn POSIX hoạt động như thế nào?",
+                options: [
+                    "Xóa bỏ hoàn toàn mã chương trình hiện tại của tiến trình, sau đó nạp một đoạn mã chương trình mới từ ổ đĩa lên thay thế và bắt đầu chạy chương trình mới đó trên cùng một PID.",
+                    "Tạo thêm một tiến trình con phụ.",
+                    "Chuyển tiến trình sang trạng thái Zombie.",
+                    "Tự nguyện nhường CPU cho tiến trình khác."
+                ],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> <code>execve</code> ghi đè toàn bộ Address Space, Text, Data, Heap, Stack của tiến trình gọi nó bằng một tệp thực thi mới. PID giữ nguyên.<br><br><b>2. Phân tích & Dân dã:</b> Giống như phép 'Nhập hồn'. Một con ma (Tiến trình vừa fork) bay vào nhập hồn vào một thân xác mới (chương trình Chrome.exe trên đĩa cứng). Từ giây phút đó, con ma sẽ hoạt động hoàn toàn với danh tính và bản chất của Chrome.exe.",
+                citation: "Chương 2.1.5: Process Creation (execve)."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Hiện tượng Orphan Process (Tiến trình mồ côi) xảy ra khi nào trong hệ thống Linux?",
+                options: [
+                    "Tiến trình bị xóa mã nguồn.",
+                    "Tiến trình cha kết thúc (bị hủy hoặc tắt) TRƯỚC tiến trình con. HĐH sẽ gán tiến trình con này cho tiến trình <code>init</code> (PID 1) làm cha nuôi.",
+                    "Tiến trình con kết thúc nhưng cha chưa gọi hàm wait().",
+                    "Tiến trình không có bộ nhớ RAM."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Orphan khác với Zombie. Mồ côi (Orphan) là khi Cha chết trước. Theo luật Linux, không tiến trình nào được phép không có cha, HĐH tự động gán tiến trình 'init' (PID 1) làm cha nuôi để dọn dẹp nó sau này.<br><br><b>2. Phân tích & Dân dã:</b> Zombie là 'Con chết nhưng Cha chưa kịp chôn' (Xác chết vẫn nằm đó tốn chỗ). Mồ côi là 'Cha chết, Con vẫn đang sống lay lắt'. Tổ dân phố (Linux) phải đưa đứa bé vào Trại trẻ mồ côi do ông giám đốc 'Init' quản lý để nuôi tiếp.",
+                citation: "Chương 2.1.5: Process Termination."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Khi xảy ra Context Switch (Chuyển ngữ cảnh) giữa 2 Tiến trình, chi phí nào là ĐẮT ĐỎ NHẤT đối với hiệu suất hệ thống?",
+                options: [
+                    "Việc phải lưu lại các thanh ghi cơ bản.",
+                    "Việc phải Flush (Xóa/Làm invalid) toàn bộ bộ nhớ Cache (TLB) và nạp lại Bảng phân trang (Page Table) mới, khiến hệ thống chạy cực chậm ở các lệnh đầu tiên.",
+                    "Chi phí in ra màn hình.",
+                    "Không tốn chi phí gì."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Chuyển đổi Process đòi hỏi phải đổi Address Space (CR3 register). Việc này vô hiệu hóa bộ đệm địa chỉ TLB (Translation Lookaside Buffer). Trái lại, đổi Thread cùng tiến trình KHÔNG phải làm việc này.<br><br><b>2. Phân tích & Dân dã:</b> Giống như đổi ca làm việc. Đổi ca giữa 2 người chung công ty (Threads), chỉ cần trao tay cái cờ lê là xong. Đổi ca giữa 2 người khác công ty (Processes), phải dọn dẹp lại toàn bộ bàn làm việc, vứt hết tài liệu cũ, bày tài liệu mới lên (Flush Cache). Rất tốn thời gian!",
+                citation: "Chương 2.1.6: Context Switch Overhead."
+            },
+            {
+                category: "Chương 2: Đa Luồng & Đa Tiến Trình",
+                q: "Kiến trúc mô hình luồng 'Nhiều-với-Nhiều' (Many-to-Many Model / Hybrid Threads) hoạt động ra sao?",
+                options: [
+                    "Mỗi một luồng User ánh xạ chính xác 1-1 với một luồng Kernel.",
+                    "Ánh xạ M luồng User lên N luồng Kernel (với M $\\ge$ N). HĐH quản lý N luồng Kernel, còn thư viện luồng tự phân bổ M luồng User chạy trên N luồng Kernel đó, cân bằng hoàn hảo giữa hiệu suất và độ linh hoạt.",
+                    "Tất cả luồng User gộp chung vào đúng 1 luồng Kernel.",
+                    "Không sử dụng luồng Kernel nào."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Mô hình này khắc phục nhược điểm của ULT (bị block toàn tiến trình) và KLT (tạo quá nhiều luồng Kernel tốn RAM). Nó cho phép thư viện luồng tối ưu hóa ở mức User, trong khi Kernel vẫn hỗ trợ đa luồng ở dưới lõi.<br><br><b>2. Phân tích & Dân dã:</b> Công ty có 100 nhân viên (User Threads) nhưng chỉ thuê 4 chỗ ngồi làm việc của Chính phủ (Kernel Threads). Công ty tự linh hoạt sắp xếp ai ngồi vào 4 ghế đó. Nếu 1 ghế bị kẹt (chờ đĩa cứng), vẫn còn 3 ghế khác để nhân viên khác luân phiên làm việc. Hiệu năng đạt đỉnh cao nhất.",
+                citation: "Chương 2.2.6: Hybrid Thread Implementations."
+            },
+
+            // ================== PHẦN 3: CHƯƠNG 2 (IPC & ĐỒNG BỘ CHUYÊN Sâu) (7 Câu) ==================
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Trong 4 điều kiện của Coffman để tạo ra Deadlock, điều kiện 'Hold and Wait' (Vừa giữ vừa chờ) có nghĩa là gì?",
+                options: [
+                    "Tiến trình phải nhả tài nguyên sau 10 giây.",
+                    "Một tiến trình đang nắm GIỮ ít nhất 1 tài nguyên, nhưng lại đang CHỜ đợi một tài nguyên khác đang bị khóa bởi tiến trình khác.",
+                    "Tiến trình bị HĐH thu hồi tài nguyên bằng vũ lực.",
+                    "Các tiến trình chờ nhau thành một vòng tròn."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Hold and Wait là điều kiện thứ 2. Để phá vỡ điều kiện này (Deadlock Prevention), HĐH thường yêu cầu tiến trình phải xin TẤT CẢ tài nguyên cùng một lúc trước khi chạy, hoặc không được giữ cái gì khi xin cái mới.<br><br><b>2. Phân tích & Dân dã:</b> Giống như bạn đang cầm chiếc 'Đũa trái' (Hold) và kiên quyết không bỏ xuống, nhưng lại há miệng gào thét đòi người bên cạnh nhường chiếc 'Đũa phải' (Wait) cho bạn. Đó là gốc rễ của bế tắc.",
+                citation: "Chương 2.5.2: Coffman Conditions."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Bài toán Sản xuất - Tiêu thụ (Producer-Consumer) dùng Semaphore để quản lý. Tại sao Semaphore <code>empty</code> khởi tạo bằng N (kích thước bộ đệm), còn Semaphore <code>full</code> khởi tạo bằng 0?",
+                options: [
+                    "Vì đó là quy định của ngôn ngữ C.",
+                    "Vì <code>empty</code> đếm số lượng slot TRỐNG có sẵn cho Producer nhét đồ vào (ban đầu trống trơn là N). <code>full</code> đếm số lượng đồ vật đã có cho Consumer lấy ra (ban đầu chưa có gì là 0).",
+                    "Vì <code>full</code> không được lớn hơn 0.",
+                    "Vì để chống lại việc tăng đột biến CPU."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Bộ đệm có kích thước N. Producer cần Slot trống (DOWN empty), khi tạo ra sản phẩm thì báo hiệu (UP full). Consumer cần Sản phẩm (DOWN full), khi lấy xong thì báo hiệu (UP empty).<br><br><b>2. Phân tích & Dân dã:</b> Có một cái khay đựng được N chiếc bánh. Ban đầu khay rỗng. Số chỗ trống (empty) = N. Số bánh ăn được (full) = 0. Thợ làm bánh phải nhìn chỗ trống mới đặt bánh vào. Khách ăn bánh phải nhìn thấy bánh mới lấy ra.",
+                citation: "Chương 2.3.5: Producer-Consumer with Semaphores."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Lệnh phần cứng <code>XCHG</code> (Exchange) có chức năng gì trong việc lập trình đồng bộ?",
+                options: [
+                    "Đổi đuôi file hệ thống.",
+                    "Hoán đổi nội dung của một thanh ghi CPU và một ô nhớ RAM trong một chu kỳ NGUYÊN TỬ (không thể bị ngắt). Được dùng để làm khóa Spinlock tương tự như lệnh TSL.",
+                    "Đổi địa chỉ IP mạng.",
+                    "Đổi trạng thái tiến trình từ Ready sang Blocked."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> XCHG (hoặc CMPXCHG) thay thế giá trị trong bộ nhớ bằng giá trị thanh ghi một cách atomic. Intel x86 sử dụng nó để hiện thực hóa khóa Mutual Exclusion.<br><br><b>2. Phân tích & Dân dã:</b> Thanh ghi của bạn cầm số 1. RAM đang chứa khóa `lock = 0`. Với lệnh XCHG siêu tốc, bạn nhét số 1 vào RAM và bốc số 0 về tay. Thấy tay có số 0, bạn biết mình đã chốt cửa thành công. Quá trình này nhanh như chớp, không ai xen vào được.",
+                citation: "Chương 2.3.3: The XCHG Instruction."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Trong cấu trúc Monitor, biến điều kiện (Condition Variables) đi kèm với 2 hàm Wait và Signal để làm gì?",
+                options: [
+                    "Để xóa dữ liệu.",
+                    "Cho phép luồng đang ở trong Monitor chủ động TẠM DỪNG (Wait) và NHẢ KHÓA Monitor ra nếu điều kiện chưa thỏa mãn, chờ luồng khác vào Monitor xử lý rồi gọi (Signal) đánh thức nó dậy.",
+                    "Để hiển thị lỗi ra màn hình (Monitor).",
+                    "Để đổi màu giao diện hệ thống."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Monitor chỉ cho 1 luồng ở trong (Mutex). Nếu luồng đó vào trong rồi mới phát hiện hết dữ liệu, nó kẹt cứng (Deadlock). Biến điều kiện giải quyết việc này bằng cách cho phép luồng đó `wait()`: tự nguyện đi ngủ và mở cửa cho kẻ khác vào.<br><br><b>2. Phân tích & Dân dã:</b> Bạn (Consumer) đã khóa cửa phòng bếp (Monitor) thành công, nhưng mở tủ lạnh ra thì hết sạch thịt (Hết điều kiện). Bạn không thể khóa cửa ngủ luôn trong đó (Chết đói cả làng). Bạn phải dùng `Wait`: Ra ghế Sofa ngủ, nhả chìa khóa cho anh Đầu bếp (Producer) vào. Đầu bếp nấu xong sẽ hô `Signal` gọi bạn dậy.",
+                citation: "Chương 2.3.7: Monitors & Condition Variables."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Thuật toán giải quyết Deadlock mang tên 'Đà điểu' (Ostrich Algorithm) có nghĩa là gì?",
+                options: [
+                    "Chạy tốc độ nhanh như đà điểu.",
+                    "Hệ điều hành nhét đầu xuống cát, vờ như KHÔNG CÓ LỖI GÌ XẢY RA. Bỏ qua hoàn toàn việc chống Deadlock vì chi phí cài đặt thuật toán quá tốn kém so với tần suất lỗi (ví dụ PC thường).",
+                    "Mổ tiến trình bị lỗi.",
+                    "Giam tiến trình trong một cái chuồng ảo."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Cách tiếp cận Ostrich được dùng phổ biến nhất ở UNIX và Windows. Việc tính toán Banker's Algorithm tốn quá nhiều tài nguyên CPU. Vì deadlock ít xảy ra ở máy cá nhân, OS chọn cách phớt lờ.<br><br><b>2. Phân tích & Dân dã:</b> Con đà điểu khi gặp nguy hiểm thường rúc đầu xuống cát giấu đi. HĐH cũng vậy. Tỷ lệ máy tính cá nhân bị Deadlock là 1 lần/năm. HĐH mặc kệ luôn, lúc nào kẹt thì bắt người dùng tự bấm nút Nguồn khởi động lại. Rẻ tiền và hiệu quả!",
+                citation: "Chương 2.5.1: The Ostrich Algorithm."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Tính chất 'Bounded Waiting' (Chờ đợi có giới hạn) trong bài toán Miền Tới Hạn yêu cầu điều gì?",
+                options: [
+                    "Tiến trình chỉ được chờ đúng 5 giây.",
+                    "Một tiến trình sau khi ngỏ ý xin vào miền găng, thì SỐ LẦN các tiến trình khác được phép chen ngang vượt mặt nó phải BỊ GIỚI HẠN. Đảm bảo nó sẽ được vào, không bị chết đói (Starvation).",
+                    "Phải có số lượng RAM lớn hơn 8GB.",
+                    "Tiến trình phải khóa ổ đĩa cứng."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Có 3 yêu cầu cho Miền tới hạn: Loại trừ lẫn nhau (Mutual Exclusion), Tiến trình (Progress), và Bounded Waiting (Chống chết đói). Thuật toán phải đảm bảo công bằng tối thiểu.<br><br><b>2. Phân tích & Dân dã:</b> Bạn bốc số ở ngân hàng, dù có nhiều khách VIP đến sau ưu tiên hơn, luật phải quy định: 'Sau 3 khách VIP thì bắt buộc phải gọi 1 người vé thường'. Số lần bạn bị chen ngang bị giới hạn (Bounded), chắc chắn đến cuối ngày bạn sẽ được phục vụ.",
+                citation: "Chương 2.3: Requirements for Critical Region."
+            },
+            {
+                category: "Chương 2: IPC & Đồng Bộ Chuyên Sâu",
+                q: "Điều kiện 'No Preemption' (Không tước đoạt) trong Deadlock có thể bị phá vỡ bằng cách nào?",
+                options: [
+                    "Ép hệ thống tắt máy.",
+                    "Cấu hình HĐH có quyền CƯỠNG CHẾ tước đoạt tài nguyên từ một tiến trình đang giữ nó (Ví dụ: lưu trạng thái vào đĩa rồi thu hồi RAM) để trao cho tiến trình khác.",
+                    "Chỉ sử dụng mã nguồn mở.",
+                    "Cấm tiến trình tạo ra luồng mới."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Ngăn ngừa bế tắc bằng cách phá vỡ điều kiện thứ 3 của Coffman. Nếu tài nguyên có thể 'Preemptible' (như CPU hay RAM có thể swap), Deadlock liên quan đến nó sẽ không xảy ra.<br><br><b>2. Phân tích & Dân dã:</b> CPU là tài nguyên không gây Deadlock vì HĐH cầm 'gậy cảnh sát', hết giờ là đập gậy đuổi tiến trình ra khỏi CPU (Tước đoạt). Nhưng máy in thì HĐH không thể tước đoạt (đang in dở mà giật giấy ra thì hỏng). Biến tài nguyên không tước đoạt thành có thể tước đoạt (vd: dùng Spooling) là giải pháp hoàn hảo.",
+                citation: "Chương 2.5.2: Deadlock Prevention - Preemption."
+            },
+
+            // ================== PHẦN 4: CHƯƠNG 2 (CHIẾN LƯỢC ĐỊNH THỜI) (5 Câu) ==================
+            {
+                category: "Chương 2: Chiến lược Định thời",
+                q: "Thuật toán Định thời ĐỘC QUYỀN (Non-preemptive) khác Định thời KHÔNG ĐỘC QUYỀN (Preemptive) ở điểm chết người nào?",
+                options: [
+                    "Độc quyền chạy nhanh hơn.",
+                    "Trong Độc quyền (Non-preemptive), một khi tiến trình chiếm được CPU, HĐH không có quyền đuổi nó ra cho đến khi nó TỰ NGUYỆN kết thúc hoặc bị Block. Rất dễ bị treo máy nếu 1 tiến trình bị kẹt vòng lặp vô hạn.",
+                    "Không độc quyền chỉ hỗ trợ 1 tiến trình.",
+                    "Độc quyền yêu cầu mua bản quyền hệ điều hành."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Non-preemptive scheduling (như FCFS, SJF thuần túy) không sử dụng ngắt đồng hồ định kỳ (Clock Interrupts) để tước CPU. HĐH giao toàn quyền sinh sát cho tiến trình.<br><br><b>2. Phân tích & Dân dã:</b> Độc quyền giống như cho mượn xe máy mà không hẹn ngày trả. Nếu người mượn lừa đảo (vòng lặp vô hạn), bạn mất xe. Không độc quyền (Preemptive) là cho thuê xe 1 tiếng (Quantum). Hết 1 tiếng, hệ thống tự tắt máy xe đòi về, bảo vệ HĐH tuyệt đối khỏi các ứng dụng bị treo.",
+                citation: "Chương 2.4.1: Preemptive vs Non-preemptive."
+            },
+            {
+                category: "Chương 2: Chiến lược Định thời",
+                q: "Trong Hệ điều hành Tương tác, tại sao người ta lại kết hợp Thuật toán Ưu tiên (Priority) với Round Robin (RR)?",
+                options: [
+                    "Để tăng gấp đôi dung lượng đĩa.",
+                    "Tạo ra các hàng đợi Ưu tiên khác nhau. Các tiến trình Ở CÙNG MỘT MỨC ƯU TIÊN sẽ được luân phiên cấp CPU theo kiểu Round Robin để tránh tình trạng một tiến trình VIP chiếm sóng mãi mãi.",
+                    "Chỉ để chạy các ứng dụng đồ họa 3D.",
+                    "Để tiết kiệm điện năng CPU."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Priority Scheduling thuần túy sẽ gây ra Starvation và treo hệ thống nếu có 2 tiến trình cùng mức ưu tiên cao nhất. Kết hợp RR đảm bảo tính công bằng (Fairness) cho mọi đối thủ cùng hạng.<br><br><b>2. Phân tích & Dân dã:</b> Bệnh viện chia độ ưu tiên: Cấp cứu (VIP) > Khám thường. Nhưng nếu có 3 ca Cấp cứu (cùng VIP) đến một lúc, bác sĩ không thể chỉ chữa cho ca số 1. Bác sĩ phải dùng Round Robin: Sơ cứu ca 1 10 phút, sang ca 2 10 phút, sang ca 3 10 phút để giữ mạng cho cả 3.",
+                citation: "Chương 2.4.4: Priority Scheduling combined with RR."
+            },
+            {
+                category: "Chương 2: Chiến lược Định thời",
+                q: "Thuật toán Định thời Phân số (Proportional Share / Lottery) giải quyết bài toán cấp phát CPU thông qua cơ chế nào?",
+                options: [
+                    "Bốc thăm ngẫu nhiên. Số lượng 'vé số' tiến trình sở hữu tỷ lệ thuận với mức tài nguyên CPU nó nhận được trong dài hạn. HĐH quay xổ số mỗi chu kỳ.",
+                    "Sử dụng trí tuệ nhân tạo AI.",
+                    "Quét virus để cấp phát.",
+                    "Dựa vào thứ tự bảng chữ cái alphabet."
+                ],
+                correct: 0,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Lottery Scheduling là thuật toán ngẫu nhiên (Randomized). Nó cực kỳ dễ cài đặt, chống Starvation tuyệt đối, và cho phép các tiến trình linh hoạt tặng vé số cho nhau.<br><br><b>2. Phân tích & Dân dã:</b> Bạn muốn tiến trình A chạy nhanh gấp đôi tiến trình B? Cấp cho A 20 vé, B 10 vé. Tổng 30 vé. Mỗi mili-giây, HĐH quay lồng cầu. Xác suất A trúng (chạy) là 66%, B trúng là 33%. Về lâu dài, CPU chia đúng tỷ lệ vàng này. B dù nghèo nhưng có 10 vé thì vẫn trúng, không bao giờ chết đói.",
+                citation: "Chương 2.4.4: Lottery Scheduling."
+            },
+            {
+                category: "Chương 2: Chiến lược Định thời",
+                q: "Thuật toán SRTF (Shortest Remaining Time First) là phiên bản Preemptive (Tước đoạt) của SJF. Nó hoạt động như thế nào khi một Tiến trình MỚI bước vào hệ thống?",
+                options: [
+                    "Bỏ qua tiến trình mới cho đến khi tiến trình cũ chạy xong.",
+                    "HĐH tạm dừng tiến trình đang chạy, so sánh THỜI GIAN CÒN LẠI của tiến trình đang chạy với Thời gian chạy của Tiến trình Mới. Kẻ nào NGẮN HƠN sẽ cướp được CPU.",
+                    "Ghép hai tiến trình làm một.",
+                    "Tăng thời gian Quantum của hệ thống lên gấp đôi."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Khác với SJF độc quyền (kẻ đến sau dù ngắn vẫn phải đợi kẻ đang chạy), SRTF đánh giá lại toàn bộ chiến trường mỗi khi có New Arrival (hoặc có ngắt).<br><br><b>2. Phân tích & Dân dã:</b> Bạn đang sửa xe tải tốn 5 tiếng (còn 4 tiếng nữa là xong). Tự nhiên có anh khách dắt xe đạp vào xịt lốp chỉ tốn 5 phút. Theo SRTF, bạn lập tức quăng mỏ lết xe tải, ra bơm lốp xe đạp (cướp CPU vì 5 phút < 4 tiếng), bơm xong mới vào sửa xe tải tiếp. Tối ưu thời gian chờ tuyệt đối!",
+                citation: "Chương 2.4.3: Shortest Remaining Time Next."
+            },
+            {
+                category: "Chương 2: Chiến lược Định thời",
+                q: "Trong Định thời Real-time, tại sao Rate Monotonic (RM) được gọi là thuật toán định thời TĨNH (Static)?",
+                options: [
+                    "Vì nó chỉ chạy trên ổ cứng SSD (Solid State).",
+                    "Vì mức độ ưu tiên của một sự kiện được gán cố định ngay từ đầu dựa trên CHU KỲ của nó (Chu kỳ ngắn = Ưu tiên cao), và KHÔNG BAO GIỜ THAY ĐỔI trong suốt quá trình chạy.",
+                    "Vì nó dùng điện tĩnh.",
+                    "Vì nó không thể dừng lại."
+                ],
+                correct: 1,
+                explanation: "<b>1. Khái niệm (Học thuật):</b> Thuật toán RM gán độ ưu tiên tỷ lệ nghịch với độ dài chu kỳ (Rate). Do chu kỳ là hằng số thiết kế của cảm biến, nên mức ưu tiên này là Static (Tĩnh).<br><br><b>2. Phân tích & Dân dã:</b> Nhiệt kế cảm biến 5ms/lần (Chu kỳ ngắn) luôn được làm thẻ VIP cấp 1. Cảm biến cửa 100ms/lần (Chu kỳ dài) luôn mang thẻ Thường dân cấp 10. Luật này chốt cứng từ khi khởi động máy. Nếu 2 đứa phát tín hiệu cùng lúc, VIP luôn thắng. Rất dễ lập trình và ổn định.",
+                citation: "Chương 2.4.5: Rate Monotonic Scheduling."
+            },
+
+            // ================== PHẦN 5: TÍNH TOÁN PHÂN RÃ LUỒNG & TIẾN TRÌNH (6 Câu) ==================
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Đoạn code ngôn ngữ C sau thực thi hàm <code>fork()</code> 3 lần liên tiếp:<br><code>fork();<br>fork();<br>fork();</code><br>Hỏi, bỏ qua tiến trình cha gốc ban đầu, có TỔNG CỘNG BAO NHIÊU tiến trình CON được tạo ra?",
+                options: ["3", "7", "8", "6"],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết (Cây nhị phân phân bào):</b><br>
+                        - Gọi tiến trình cha gốc ban đầu là $P_0$.<br>
+                        - Lệnh <code>fork()</code> số 1: $P_0$ đẻ ra $P_1$. $\\rightarrow$ Tổng cộng có 2 tiến trình đang chạy.<br>
+                        - Lệnh <code>fork()</code> số 2: TẤT CẢ các tiến trình đang có (gồm 2 kẻ $P_0, P_1$) cùng chạy lệnh đẻ này. $P_0$ đẻ $P_2$; $P_1$ đẻ $P_3$. $\\rightarrow$ Cả làng có 4 tiến trình ($2^2$).<br>
+                        - Lệnh <code>fork()</code> số 3: TẤT CẢ 4 tiến trình hiện tại cùng đẻ. Sinh ra thêm 4 đứa mới. $\\rightarrow$ Cả làng có 8 tiến trình ($2^3$).<br>
+                        - Số lượng tiến trình CON được sinh ra = Tổng số lượng - Cha gốc ban đầu = $8 - 1 = 7$.<br>
+                        $\\rightarrow$ <b>Đáp án: 7 tiến trình con mới (Công thức tổng quát $2^n - 1$).</b>
+                    </div>
+                `,
+                citation: "Chương 2.1: Process Creation - Tracing fork()."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Hệ thống sử dụng Round Robin (RR) cho CÁC TIẾN TRÌNH với Quantum HĐH $Q_{OS} = 10ms$.<br>- Tiến trình A chứa 2 Luồng User (A1, A2). A có thư viện tự chia RR nội bộ với $Q_{User} = 5ms$.<br>- Tiến trình B chỉ có 1 Luồng User (B1).<br>Thứ tự phân bổ CPU cho các LUỒNG trong 20ms đầu tiên diễn ra như thế nào?",
+                options: [
+                    "A1 (10ms) -> B1 (10ms).",
+                    "A1 (5ms) -> A2 (5ms) -> B1 (10ms).",
+                    "A1 (5ms) -> B1 (5ms) -> A2 (5ms) -> B1 (5ms).",
+                    "A1 (10ms) -> A2 (10ms)."
+                ],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết (Mô hình định thời 2 cấp):</b><br>
+                        1. <b>Cấp Kernel:</b> HĐH chỉ thấy 2 thực thể là Tiến trình A và Tiến trình B. HĐH chia bánh (Round Robin): Cấp CPU cho <b>A chạy 10ms</b>, rồi tước CPU cấp cho <b>B chạy 10ms</b>.<br><br>
+                        2. <b>Cấp User (Bên trong A):</b> Khi Tiến trình A được cấp CPU (10ms), Thư viện luồng (Run-time system) của A bắt đầu hoạt động. Nó tự chia bánh RR với Quantum = 5ms.<br>
+                        - Nó cho luồng <b>A1 chạy 5ms</b>.<br>
+                        - Xong nó tước quyền A1, cho <b>A2 chạy 5ms</b> tiếp theo.<br>
+                        - Hết 10ms, HĐH Kernel bên ngoài vung búa tước CPU của cả Tiến trình A.<br><br>
+                        3. <b>Cấp User (Bên trong B):</b> Kernel cấp CPU cho B. B chỉ có 1 luồng B1, nên <b>B1 húp trọn 10ms</b>.<br>
+                        $\\rightarrow$ <b>Đáp án: Thứ tự là A1(5) $\\rightarrow$ A2(5) $\\rightarrow$ B1(10)</b>.
+                    </div>
+                `,
+                citation: "Chương 2.4.6: Scheduling in User-Level Threads."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Ba Tiến trình P1, P2, P3 cùng đến tại t=0. Burst Time: P1 = 24ms, P2 = 3ms, P3 = 3ms. HĐH áp dụng Round Robin (Quantum = 4ms). Tính Thời gian quay vòng (Turnaround Time) của tiến trình P2?",
+                options: ["7 ms", "10 ms", "3 ms", "30 ms"],
+                correct: 0,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết (Gantt Chart RR):</b><br>
+                        Hàng đợi: [P1, P2, P3]. Quantum = 4ms.<br>
+                        - <b>Từ t=0 đến t=4:</b> P1 chạy 4ms (còn 20). $\\rightarrow$ Xếp P1 xuống cuối: [P2, P3, P1].<br>
+                        - <b>Từ t=4 đến t=7:</b> P2 lấy CPU. P2 chỉ cần 3ms. Do 3 < Quantum(4), P2 chạy trọn 3ms rồi TỰ NGUYỆN KẾT THÚC luôn (không đợi bị tước).<br>
+                        - Thời điểm P2 kết thúc chính xác là $4 + 3 = 7$ ms.<br><br>
+                        - Tính Turnaround Time (TAT = Completion Time - Arrival Time):<br>
+                        $$ TAT_{P2} = 7 - 0 = 7 \\text{ ms} $$<br>
+                        $\\rightarrow$ <b>Đáp án: 7 ms.</b>
+                    </div>
+                `,
+                citation: "Chương 2.4.4: Round-Robin Evaluation."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Tính toán Overheads (Chi phí chuyển đổi): Để chuyển ngữ cảnh 1 Process mất 5 mili-giây. Chuyển ngữ cảnh 1 Thread (cùng Process) mất 1 mili-giây. Một Web Server cần xử lý 10 request (mỗi request mất 2ms tính toán thuần). Nếu chạy Đa tiến trình (Multiprocessing - tạo 10 processes) thì tổng thời gian hoàn thành (tính cả Overhead ban đầu cho từng request) so với Đa luồng (Multithreading - tạo 10 threads trong 1 process) chênh lệch bao nhiêu ms?",
+                options: ["Luồng nhanh hơn 4ms.", "Luồng nhanh hơn 40ms.", "Bằng nhau.", "Tiến trình nhanh hơn 40ms."],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết:</b><br>
+                        Giả định phải tuần tự khởi tạo/chuyển qua từng nhân viên để phục vụ 10 request:<br>
+                        1. <b>Mô hình Đa Tiến Trình (10 Processes):</b><br>
+                        Mỗi request = 5ms (Context Switch) + 2ms (Thực thi) = 7ms.<br>
+                        Tổng cộng 10 request = $10 \\times 7 = 70 \\text{ ms}$.<br><br>
+                        2. <b>Mô hình Đa Luồng (10 Threads cùng Process):</b><br>
+                        Mỗi request = 1ms (Thread Switch) + 2ms (Thực thi) = 3ms.<br>
+                        Tổng cộng 10 request = $10 \\times 3 = 30 \\text{ ms}$.<br><br>
+                        3. <b>Độ chênh lệch:</b> $70 - 30 = 40 \\text{ ms}$.<br>
+                        $\\rightarrow$ <b>Đáp án: Đa luồng xử lý nhanh hơn Đa tiến trình 40 ms. Đây là lý do các Server chuộng kiến trúc Đa luồng.</b>
+                    </div>
+                `,
+                citation: "Chương 2.2: The Classical Thread Model (Performance)."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Lập lịch SRTF (Shortest Remaining Time First):<br>P1 đến lúc t=0 (Burst = 8ms).<br>P2 đến lúc t=1 (Burst = 4ms).<br>P3 đến lúc t=2 (Burst = 2ms).<br>Hỏi tại thời điểm t=3, tiến trình nào đang chiếm giữ CPU?",
+                options: ["P1", "P2", "P3", "Không có ai"],
+                correct: 2,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết (Vẽ trục thời gian):</b><br>
+                        - <b>t=0:</b> Chỉ có P1 đến. P1 chiếm CPU. (Burst còn 8).<br>
+                        - <b>t=1:</b> P2 đến. So sánh: P1 còn 7ms. P2 cần 4ms. <br>
+                          Vì 4 < 7, <b>P2 CƯỚP CPU từ P1</b>. Hàng đợi: [P1]. P2 chạy.<br>
+                        - <b>t=2:</b> P3 đến. So sánh: P2 đang chạy vừa tiêu tốn 1ms (còn 3ms). P3 cần 2ms. <br>
+                          Vì 2 < 3, <b>P3 TIẾP TỤC CƯỚP CPU từ P2</b>. Hàng đợi: [P2, P1]. P3 chạy.<br>
+                        - <b>t=3:</b> Không có ai mới đến. P3 đang chạy được 1ms (cần 1ms nữa là xong). Không có đối thủ nào có Burst < 1ms cả. P3 vẫn nghiễm nhiên giữ CPU.<br>
+                        $\\rightarrow$ <b>Đáp án: Tiến trình P3 đang nắm CPU tại t=3.</b>
+                    </div>
+                `,
+                citation: "Chương 2.4.3: SRTF (Preemptive SJF)."
+            },
+            {
+                category: "Bài tập Tính toán Tự luận",
+                q: "Trong bài toán Reader-Writer ưu tiên Writer, biến đếm Semaphore <code>readcount</code> dùng để làm gì?",
+                options: [
+                    "Đếm số lượng Writer đang ở trong hệ thống.",
+                    "Đếm số lượng Reader đang vào đọc. Khi Reader ĐẦU TIÊN (readcount == 1) vào, nó gọi DOWN khóa thư viện để chặn Writer. Các Reader tiếp theo cứ thế vào không cần khóa. Khi Reader CUỐI CÙNG rời đi (readcount == 0), nó gọi UP nhả khóa thư viện để Writer vào.",
+                    "Tính dung lượng file văn bản.",
+                    "Phân bổ CPU cho Reader."
+                ],
+                correct: 1,
+                explanation: `
+                    <div class="calc-step">
+                        <b>Giải tự luận chi tiết (Logic toán học Reader-Writer):</b><br>
+                        Bài toán tối ưu hóa cho phép hàng chục người Đọc (Reader) vào cùng lúc, nhưng chỉ dùng 1 khóa Mutex/Semaphore bảo vệ thư viện.<br>
+                        - Code của Reader:<br>
+                        <code>mutex_lock();</code> // Độc quyền biến đếm<br>
+                        <code>readcount++;</code><br>
+                        <code>if (readcount == 1) DOWN(db_lock);</code> // Kẻ mở đường: Nếu tao là người đầu tiên, tao chốt cửa từ chối Writer vĩnh viễn.<br>
+                        <code>mutex_unlock();</code><br>
+                        ... [Bắt đầu Đọc dữ liệu Database] ...<br>
+                        <code>mutex_lock();</code><br>
+                        <code>readcount--;</code><br>
+                        <code>if (readcount == 0) UP(db_lock);</code> // Kẻ khóa sổ: Nếu tao là người cuối cùng rời đi, tao mở cửa cho Writer bên ngoài vào.<br>
+                        <code>mutex_unlock();</code><br>
+                        $\\rightarrow$ <b>Đáp án: <code>readcount</code> để người Đầu tiên khóa và người Cuối cùng mở.</b>
+                    </div>
+                `,
+                citation: "Chương 2.3.7: The Readers and Writers Problem."
+            }
+        ];
+
+        let score = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+            let currentCategory = "";
+            let questionCounter = 1;
+            const scoreDisplay = document.getElementById('score-display');
+
+            quizData.forEach((qObj) => {
+                if (qObj.category !== currentCategory) {
+                    currentCategory = qObj.category;
+                    const sectionDivider = document.createElement('div');
+                    sectionDivider.className = "mt-16 mb-8";
+                    sectionDivider.id = `section-${currentCategory}`;
+                    sectionDivider.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-lg md:text-xl font-bold uppercase tracking-widest text-zinc-900 border-l-4 border-blue-600 pl-4 py-1">${currentCategory}</h2>
+                            <div class="h-px bg-zinc-200 flex-grow"></div>
+                        </div>
+                    `;
+                    container.appendChild(sectionDivider);
+                }
+
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10 p-6 bg-zinc-50/50 rounded-xl border border-zinc-100 hover:border-zinc-300 transition-colors shadow-sm";
+
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-semibold text-zinc-900 mb-5 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="bg-zinc-900 text-white px-2 py-1 rounded text-sm mr-2 shadow-sm">Q${questionCounter}</span> ` + qObj.q.replace(/<br>/g, '<br>');
+                qBlock.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-3";
+                
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-6 clrs-proof rounded-lg";
+                answerDiv.innerHTML = `
+                    <h4 class="font-bold text-zinc-900 mb-3 flex items-center"><i class="fa-solid fa-graduation-cap text-blue-600 mr-2"></i> Lời giải & Phân tích chi tiết:</h4>
+                    <div class="text-zinc-700 space-y-2 leading-relaxed">${qObj.explanation}</div>
+                    <p class="text-xs font-mono text-zinc-500 mt-4 pt-3 border-t border-zinc-200"><i class="fa-solid fa-book-bookmark mr-2"></i>Tham chiếu giáo trình: ${qObj.citation}</p>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-5 py-4 rounded-lg border border-zinc-200 text-zinc-700 bg-white hover:bg-zinc-50 hover:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base font-medium shadow-sm transition";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-8 inline-block text-zinc-400">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'hover:border-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600 text-lg"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600 text-lg"></i>`;
+                            }
+                        });
+
+                        if (optIndex === qObj.correct) {
+                            score++;
+                            scoreDisplay.innerText = `Điểm: ${score}/30`;
+                            scoreDisplay.classList.add('bg-emerald-100', 'text-emerald-800');
+                            setTimeout(() => {
+                                scoreDisplay.classList.remove('bg-emerald-100', 'text-emerald-800');
+                            }, 500);
+                        }
+
+                        if (window.MathJax) {
+                            MathJax.typesetPromise([answerDiv]).then(() => {
+                                answerDiv.classList.add('show');
+                            });
+                        } else {
+                            answerDiv.classList.add('show');
+                        }
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                container.appendChild(qBlock);
+                
+                questionCounter++;
+            });
+            
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>

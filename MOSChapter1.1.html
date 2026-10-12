@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Exams - Tanenbaum Chapter 1.1</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            300: '#d4d4d8',
+                            400: '#a1a1aa',
+                            500: '#71717a',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for any formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            background-color: #fafafa;
+            color: #18181b;
+        }
+        
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* MC Option Buttons */
+        .option-btn {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .option-btn.selected-correct {
+            background-color: #f0fdf4 !important; /* emerald-50 */
+            border-color: #22c55e !important; /* emerald-500 */
+            color: #14532d !important; /* emerald-900 */
+            font-weight: 500;
+        }
+        .option-btn.selected-wrong {
+            background-color: #fef2f2 !important; /* rose-50 */
+            border-color: #ef4444 !important; /* rose-500 */
+            color: #7f1d1d !important; /* rose-900 */
+        }
+        .option-btn.show-correct {
+            background-color: #f0fdf4 !important;
+            border-color: #22c55e !important;
+            color: #14532d !important;
+        }
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Minimalist Answer Block */
+        .answer-block {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #f4f4f5; /* zinc-100 */
+            border-left: 2px solid #52525b; /* zinc-600 */
+            color: #3f3f46; /* zinc-700 */
+            font-size: 0.95rem;
+        }
+        .answer-block.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .clrs-proof {
+            position: relative;
+            padding-left: 1rem;
+        }
+        .clrs-proof::after {
+            content: "■";
+            position: absolute;
+            bottom: -5px;
+            right: 0;
+            font-size: 0.8rem;
+            color: #71717a;
+        }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .answer-block { border-left: 1px solid #000; background: transparent; display: block; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+
+    <!-- Header Minimalist -->
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block"></span>
+                <h1 class="text-xl font-semibold tracking-tight text-zinc-900">Operating Systems (Tanenbaum Standard)</h1>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1">
+                    <i class="fa-solid fa-print mr-2"></i> In Đề Thi
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-64 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-semibold mb-4">Mục Lục Khóa Học</h2>
+                <nav class="flex flex-col gap-1" id="tabs">
+                    <button class="tab-btn text-left px-4 py-2.5 text-sm font-medium transition-colors border-l-2 bg-zinc-100 border-zinc-900 text-zinc-900">
+                        Chương 1.1: HĐH là gì?
+                    </button>
+                    <button class="tab-btn text-left px-4 py-2.5 text-sm font-medium transition-colors border-l-2 border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 cursor-not-allowed">
+                        Chương 1.2: Lịch sử HĐH (Sắp mở)
+                    </button>
+                    <button class="tab-btn text-left px-4 py-2.5 text-sm font-medium transition-colors border-l-2 border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 cursor-not-allowed">
+                        Chương 1.3: Phần cứng (Sắp mở)
+                    </button>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200">
+                    <p class="text-xs text-zinc-600 leading-relaxed">
+                        <strong>Lưu ý:</strong> Bấm vào đáp án để chọn. Hệ thống sẽ tự động đối chiếu, khóa câu hỏi và hiện lời giải chi tiết bên dưới theo phong cách CLRS.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-grow max-w-4xl">
+            
+            <div id="exam-container" class="tab-content active bg-white border border-zinc-200 p-8 md:p-12">
+                <div class="mb-10">
+                    <h2 class="text-2xl font-semibold tracking-tight text-zinc-900">CHƯƠNG 1.1: HỆ ĐIỀU HÀNH LÀ GÌ? (WHAT IS AN OS?)</h2>
+                    <p class="text-zinc-500 text-sm mt-2">Dựa trên giáo trình Modern Operating Systems - Andrew S. Tanenbaum | Số lượng: 20 câu</p>
+                    <hr class="mt-6 border-zinc-200">
+                </div>
+
+                <!-- Questions will be injected here via JS -->
+                <div id="questions-list" class="space-y-12"></div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-200 bg-zinc-50 text-zinc-500 py-8 text-center no-print mt-auto">
+        <p class="text-sm font-medium">Hệ thống Trắc nghiệm Hệ Điều Hành (Chuẩn Tanenbaum) &copy; 2026.</p>
+        <p class="text-xs mt-1">Minimalist UI, Powered by Tailwind CSS.</p>
+    </footer>
+
+    <script>
+        // Data for exactly 20 questions deep-diving into Chapter 1.1 of Tanenbaum
+        const quizData = [
+            {
+                q: "Theo Tanenbaum, Hệ điều hành (HĐH) có hai chức năng/góc nhìn cốt lõi là gì?",
+                options: [
+                    "Biên dịch mã nguồn và diệt virus.",
+                    "Cung cấp giao diện đồ họa (GUI) và lướt web.",
+                    "Máy ảo mở rộng (Extended Machine) và Trình quản lý tài nguyên (Resource Manager).",
+                    "Quản lý cơ sở dữ liệu và mã hóa file."
+                ],
+                correct: 2,
+                explanation: "HĐH phục vụ 2 nhóm đối tượng: Lập trình viên (cần một 'Máy mở rộng/Trừu tượng' với các tập lệnh dễ dùng, giấu đi sự xấu xí của phần cứng) và Hệ thống (cần một 'Trình quản lý' để phân phát RAM, CPU, I/O một cách trật tự cho các tiến trình đang tranh giành nhau).",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Tại sao người ta gọi góc nhìn 'Top-Down' của HĐH là 'Máy ảo mở rộng' (Extended Machine / Abstract Machine)?",
+                options: [
+                    "Vì nó chạy trên phần mềm VMware hoặc VirtualBox.",
+                    "Vì HĐH che giấu sự phức tạp, rối rắm của phần cứng vật lý và cung cấp cho lập trình viên một giao diện sạch sẽ, dễ lập trình hơn.",
+                    "Vì HĐH tự động tăng gấp đôi dung lượng RAM máy tính.",
+                    "Vì nó cho phép máy tính kết nối ra mạng Internet toàn cầu."
+                ],
+                correct: 1,
+                explanation: "Phần cứng vật lý (như bộ điều khiển ổ đĩa) nhận các lệnh rất phức tạp (như đọc sector, head, track, chỉnh motor). HĐH 'trừu tượng hóa' (abstract) mớ hỗn độn này thành khái niệm 'File'. Lập trình viên chỉ cần gọi lệnh `read()` hay `write()` một cách nhàn nhã.",
+                citation: "Chương 1.1.1: The Operating System as an Extended Machine."
+            },
+            {
+                q: "Để minh họa cho sự 'xấu xí' của giao diện phần cứng, Tanenbaum đã lấy ví dụ kinh điển về thiết bị nào trong chương 1.1?",
+                options: [
+                    "Màn hình LCD độ phân giải 4K.",
+                    "Bộ điều khiển ổ đĩa mềm NEC PD765 (Floppy Disk Controller).",
+                    "Bàn phím cơ.",
+                    "Chuột quang học."
+                ],
+                correct: 1,
+                explanation: "Để chứng minh phần cứng khó lập trình đến mức nào, sách lấy ví dụ chip NEC PD765. Nó có 16 lệnh, mỗi lệnh cần từ 1 đến 9 byte tham số truyền vào các thanh ghi, buộc lập trình viên phải lo các việc cực tiểu tiết như bật/tắt motor đĩa. Việc này là quá sức với dân viết ứng dụng, nên HĐH phải đứng ra làm thay.",
+                citation: "Chương 1.1.1: The Operating System as an Extended Machine."
+            },
+            {
+                q: "Đứng từ góc nhìn 'Bottom-Up', vai trò chủ đạo của Hệ điều hành là:",
+                options: [
+                    "Resource Manager (Trình quản lý tài nguyên).",
+                    "User Interface (Giao diện người dùng).",
+                    "Compiler (Trình biên dịch mã máy).",
+                    "Database Administrator (Quản trị cơ sở dữ liệu)."
+                ],
+                correct: 0,
+                explanation: "Góc nhìn từ dưới lên (từ phần cứng nhìn lên) coi HĐH là người quản lý. CPU, RAM, Disk, Mạng là tài nguyên. Khi nhiều tiến trình (process) cùng lúc đòi in tài liệu, đòi tính toán, HĐH phải cấp phát tài nguyên có trật tự, tránh xung đột.",
+                citation: "Chương 1.1.2: The Operating System as a Resource Manager."
+            },
+            {
+                q: "Quản lý tài nguyên (Multiplexing) được thực hiện theo 2 phương thức nào?",
+                options: [
+                    "Trong nhân (Kernel) và Ngoại vi (Peripheral).",
+                    "Đơn nhiệm (Single-tasking) và Đa nhiệm (Multi-tasking).",
+                    "Theo thời gian (Time) và Theo không gian (Space).",
+                    "Phần cứng (Hardware) và Phần mềm (Software)."
+                ],
+                correct: 2,
+                explanation: "HĐH chia sẻ tài nguyên theo 2 kiểu: 'Thời gian' (Time multiplexing) - CPU làm việc cho anh A một lát rồi sang anh B; và 'Không gian' (Space multiplexing) - RAM được chia làm nhiều mảnh, anh A dùng 1 mảnh, anh B dùng 1 mảnh cùng một lúc.",
+                citation: "Chương 1.1.2: The Operating System as a Resource Manager."
+            },
+            {
+                q: "Chia sẻ tài nguyên theo thời gian (Time Multiplexing) áp dụng rõ nhất cho thiết bị nào dưới đây?",
+                options: [
+                    "Main Memory (Bộ nhớ RAM).",
+                    "Hard Disk Storage (Không gian lưu trữ đĩa cứng).",
+                    "CPU (Bộ vi xử lý).",
+                    "Motherboard (Bo mạch chủ)."
+                ],
+                correct: 2,
+                explanation: "Với CPU, không thể cắt CPU ra làm đôi cho 2 chương trình. HĐH cho chương trình 1 dùng CPU vài mili-giây, sau đó dừng lại, chuyển CPU cho chương trình 2 dùng. Chúng thay phiên nhau theo trục thời gian.",
+                citation: "Chương 1.1.2: The Operating System as a Resource Manager."
+            },
+            {
+                q: "Chia sẻ tài nguyên theo không gian (Space Multiplexing) áp dụng rõ nhất cho thiết bị nào?",
+                options: [
+                    "Bộ nhớ chính (RAM).",
+                    "Bàn phím.",
+                    "Chuột.",
+                    "Đồng hồ thời gian thực."
+                ],
+                correct: 0,
+                explanation: "Thay vì để 1 chương trình chiếm toàn bộ RAM rồi nhường lại, RAM được chia nhỏ thành nhiều vùng (blocks). Nhiều chương trình cùng nằm trong RAM ở các không gian (vị trí) khác nhau cùng lúc. Đây là Multiplexing in Space.",
+                citation: "Chương 1.1.2: The Operating System as a Resource Manager."
+            },
+            {
+                q: "Hầu hết các máy tính hiện đại có ít nhất 2 chế độ hoạt động (modes) ở cấp độ phần cứng. Hệ điều hành chạy ở chế độ nào?",
+                options: [
+                    "User Mode (Chế độ người dùng).",
+                    "Application Mode (Chế độ ứng dụng).",
+                    "Kernel Mode (Chế độ nhân / Supervisor Mode).",
+                    "Safe Mode (Chế độ an toàn)."
+                ],
+                correct: 2,
+                explanation: "Kernel mode là chế độ đặc quyền tối cao. Ở chế độ này, phần mềm (tức là HĐH) được quyền thực thi MỌI câu lệnh của CPU, điều khiển MỌI thiết bị phần cứng. Nó là 'vua' của hệ thống.",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Các chương trình phần mềm thông thường (như Trình duyệt web, Word) chạy ở chế độ nào?",
+                options: [
+                    "Kernel Mode.",
+                    "Supervisor Mode.",
+                    "User Mode.",
+                    "Hardware Mode."
+                ],
+                correct: 2,
+                explanation: "Các phần mềm của người dùng chạy ở User mode. Ở chế độ này, phần cứng khóa một số tính năng nhạy cảm. Chương trình không thể tự ý gọi lệnh I/O trực tiếp (ví dụ ra lệnh cho máy in) mà phải xin phép HĐH.",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Giao diện dòng lệnh (Shell) hoặc Giao diện đồ họa (GUI) có phải là một phần thuộc Hệ điều hành (Kernel) không?",
+                options: [
+                    "Có, chúng là phần lõi quan trọng nhất của HĐH.",
+                    "Không, chúng là các chương trình ứng dụng (chạy ở User mode) dùng để tương tác mạnh mẽ với HĐH, chứ không nằm trong Kernel mode.",
+                    "Chỉ có Shell là của HĐH, còn GUI thì không.",
+                    "Cả Shell và GUI đều chạy ở Kernel mode."
+                ],
+                correct: 1,
+                explanation: "Một sự nhầm lẫn cực kỳ phổ biến! Shell và GUI chỉ là 'chiếc áo' khoác bên ngoài. Chúng là các chương trình ở User Space (chạy ở User mode) có nhiệm vụ nhận lệnh từ người dùng và gửi System Call xuống cho HĐH (Kernel) xử lý.",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Điều gì sẽ xảy ra nếu một chương trình ứng dụng (đang chạy ở User mode) cố tình thực thi một lệnh đặc quyền (Privileged Instruction)?",
+                options: [
+                    "Lệnh vẫn chạy bình thường, nhưng bị ghi vào file log.",
+                    "Chương trình sẽ tự động được cấp quyền Kernel mode.",
+                    "Phần cứng sẽ phát sinh một ngắt (Trap/Exception) để hệ điều hành vào cuộc, thường dẫn đến việc kết liễu luôn chương trình đó.",
+                    "Hệ điều hành sẽ tắt máy ngay lập tức."
+                ],
+                correct: 2,
+                explanation: "Phần cứng (CPU) quản lý Mode bit. Nếu CPU đang ở User Mode (1) mà đọc được mã lệnh cấm (vd: xóa RAM hệ thống), phần cứng sẽ giội gáo nước lạnh báo lỗi Trap. HĐH thức dậy, thấy thằng App này dám làm phản liền tắt tiến trình đó báo lỗi (ví dụ: Segmentation Fault).",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Trình biên dịch (Compiler) hoặc Trình soạn thảo văn bản (Editor) được phân loại là gì trong kiến trúc máy tính?",
+                options: [
+                    "Hệ điều hành cốt lõi (Kernel).",
+                    "Phần cứng (Hardware).",
+                    "Chương trình hệ thống hoặc chương trình ứng dụng (System / Application Programs).",
+                    "Ngôn ngữ máy (Machine Language)."
+                ],
+                correct: 2,
+                explanation: "Cấu trúc sách mô tả 4 tầng: 1. Hardware -> 2. Operating System -> 3. System Programs (như Compiler, Editor, Shell) -> 4. Application Programs. HĐH nằm ngay trên phần cứng.",
+                citation: "Chương 1.1, Hình 1-1 (Vị trí của HĐH)."
+            },
+            {
+                q: "Sự khác biệt cốt lõi nhất về mặt 'Quyền hạn' giữa HĐH và một chương trình hệ thống (như Compiler) là gì?",
+                options: [
+                    "Compiler viết bằng C, HĐH viết bằng Assembly.",
+                    "HĐH chạy ở Kernel mode có toàn quyền phần cứng, còn Compiler chạy ở User mode và bị giới hạn quyền.",
+                    "Compiler chạy nhanh hơn HĐH.",
+                    "Không có sự khác biệt."
+                ],
+                correct: 1,
+                explanation: "Định nghĩa chính thức từ Tanenbaum: HĐH là phần mềm chạy trong Kernel mode (chế độ giám sát). Còn lại, dù là chương trình hệ thống quan trọng như Compiler đi nữa, cũng chỉ là dân thường (User mode).",
+                citation: "Chương 1.1: What Is An Operating System?"
+            },
+            {
+                q: "Một ví dụ kinh điển về sự hỗn loạn nếu KHÔNG có Hệ điều hành đóng vai trò Trình quản lý tài nguyên là gì?",
+                options: [
+                    "Máy tính bị nhiễm virus Trojan.",
+                    "Màn hình bị nhiễu do sóng điện từ.",
+                    "Ba chương trình cùng gửi dữ liệu ra một máy in cùng một lúc, dẫn đến kết quả in ra một trang giấy lộn xộn chứa các dòng chữ trộn lẫn của cả ba.",
+                    "Bàn phím bị kẹt phím Space."
+                ],
+                correct: 2,
+                explanation: "Vai trò Resource Manager là 'cầm trịch'. HĐH sẽ gom dữ liệu của 3 người nhét vào ổ đĩa cứng (Spooling), sau đó thong thả in từng tài liệu một. Nếu không có OS, các phần mềm cứ tranh nhau đẩy bit ra cổng máy in sẽ gây thảm họa.",
+                citation: "Chương 1.1.2: The Operating System as a Resource Manager."
+            },
+            {
+                q: "Khái niệm 'Abstraction' (Trừu tượng hóa) do Hệ điều hành tạo ra mang ý nghĩa gì?",
+                options: [
+                    "Ẩn đi chi tiết kỹ thuật phức tạp bên dưới, hiển thị một mô hình đơn giản và đẹp đẽ bên trên.",
+                    "Vẽ đồ họa 3D cho các trò chơi.",
+                    "Chuyển ngôn ngữ cấp cao thành mã nhị phân.",
+                    "Ngắt kết nối Internet khi có nguy hiểm."
+                ],
+                correct: 0,
+                explanation: "Ví dụ kinh điển: Lập trình viên gọi lệnh lưu 'File'. Khái niệm 'File' là một sự trừu tượng hóa. Dưới đáy, nó là các sector từ tính trên đĩa xoay, các kim từ tính đọc/ghi, các block liên kết. HĐH giấu hết rác rưởi đó đi.",
+                citation: "Chương 1.1.1: The Operating System as an Extended Machine."
+            },
+            {
+                q: "Một hệ thống máy tính hoàn chỉnh thường được vẽ theo mô hình lớp (layered model). Đáy cùng là gì và trên cùng là gì?",
+                options: [
+                    "Đáy: Người dùng | Trên cùng: Phần cứng.",
+                    "Đáy: Vi mạch (Hardware) | Trên cùng: Chương trình ứng dụng / Người dùng.",
+                    "Đáy: Hệ điều hành | Trên cùng: Mạng lưới Internet.",
+                    "Đáy: Shell | Trên cùng: Kernel."
+                ],
+                correct: 1,
+                explanation: "Hình 1-1 của sách vẽ: Lớp dưới cùng là Hardware (Phần cứng, vi mạch), lớp tiếp theo bọc lấy nó là OS (Kernel mode), bọc ngoài OS là System Programs, và ngoài cùng là Application Programs cho User.",
+                citation: "Chương 1.1, Hình 1-1."
+            },
+            {
+                q: "Để một ứng dụng ở User mode có thể giao tiếp, nhờ vả HĐH thực hiện các thao tác đọc/ghi ổ cứng, nó sử dụng cơ chế nào?",
+                options: [
+                    "System Call (Lời gọi hệ thống).",
+                    "Call Center.",
+                    "Hardware Trap.",
+                    "Assembly Jump."
+                ],
+                correct: 0,
+                explanation: "HĐH cung cấp một bộ API đặc biệt gọi là System Calls. Khi ứng dụng cần tài nguyên, nó gọi System Call. Cơ chế này sẽ an toàn chuyển CPU từ User mode sang Kernel mode để thực hiện việc, xong xuôi trả kết quả về.",
+                citation: "Chương 1.1: Mở rộng kiến thức về User/Kernel interface."
+            },
+            {
+                q: "Hệ điều hành thường được thiết kế để giải quyết loại ảo tưởng (illusion) nào cho người dùng và chương trình?",
+                options: [
+                    "Tạo ảo tưởng rằng máy tính không tiêu thụ điện năng.",
+                    "Tạo ảo tưởng rằng máy tính có màn hình vô tận.",
+                    "Tạo ảo tưởng rằng mỗi chương trình đang có riêng một CPU, bộ nhớ và các thiết bị I/O vô hạn cho riêng nó (mặc dù thực tế đang phải chia sẻ chật vật).",
+                    "Tạo ảo tưởng rằng mọi phần mềm đều miễn phí."
+                ],
+                correct: 2,
+                explanation: "Đó chính là sức mạnh của Abstraction và Multiplexing. Tiến trình Word tưởng nó đang dùng trọn bộ CPU và có hàng Gigabyte RAM riêng (qua khái niệm Virtual Memory), trong khi HĐH đằng sau đang khốn khổ chia nhỏ thời gian và không gian cho hàng chục app khác.",
+                citation: "Chương 1.1.1: Extended Machine."
+            },
+            {
+                q: "Theo Tanenbaum, việc cung cấp một 'Giao diện lập trình ứng dụng (API)' chuẩn mực thuộc về vai trò nào của HĐH?",
+                options: [
+                    "Resource Manager.",
+                    "Top-down (Extended Machine).",
+                    "Time Multiplexing.",
+                    "Space Multiplexing."
+                ],
+                correct: 1,
+                explanation: "Vì nó cung cấp các lệnh, hàm chuẩn (ví dụ chuẩn POSIX) giúp lập trình viên thao tác với phần cứng qua một lớp trừu tượng (abstract), nên nó thuộc góc nhìn Top-Down (Máy mở rộng).",
+                citation: "Chương 1.1.1: The Operating System as an Extended Machine."
+            },
+            {
+                q: "Tóm lại, nếu có người hỏi 'Hệ điều hành thực chất là gì?', câu trả lời đầy đủ và bao quát nhất theo giáo trình là:",
+                options: [
+                    "Một phần mềm quản lý ổ cứng và cài đặt ứng dụng.",
+                    "Chương trình chạy trong User mode để hiển thị Desktop.",
+                    "Là phần mềm bọc trên phần cứng, vừa cung cấp giao diện trừu tượng hóa cho lập trình viên (Top-down), vừa quản lý, phân bổ tài nguyên hiệu quả, công bằng (Bottom-up).",
+                    "Là chip IC nằm trong Mainboard."
+                ],
+                correct: 2,
+                explanation: "Tanenbaum khẳng định HĐH không có một định nghĩa duy nhất. Nó mang bản chất kép: Với người làm phần mềm, nó là chiếc máy ảo đẹp đẽ. Với hệ thống, nó là anh kế toán quản lý tài nguyên nghiêm ngặt.",
+                citation: "Chương 1.1 (Summary: 1.1.1 & 1.1.2)"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('questions-list');
+
+            quizData.forEach((qObj, index) => {
+                // Main Question Block
+                const qBlock = document.createElement('div');
+                qBlock.className = "mb-10";
+
+                // Question Title
+                const qTitle = document.createElement('h3');
+                qTitle.className = "font-medium text-zinc-900 mb-4 text-base md:text-lg leading-relaxed";
+                qTitle.innerHTML = `<span class="font-bold text-zinc-900 mr-2">Câu ${index + 1}:</span> ${qObj.q}`;
+                qBlock.appendChild(qTitle);
+
+                // Options Grid
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = "flex flex-col gap-2";
+                
+                // Answer Block (hidden initially)
+                const answerDiv = document.createElement('div');
+                answerDiv.className = "answer-block mt-4";
+                answerDiv.innerHTML = `
+                    <h4 class="font-semibold text-zinc-900 mb-2">Lời giải & Phân tích:</h4>
+                    <div class="clrs-proof space-y-2">
+                        <p>${qObj.explanation}</p>
+                        <p class="text-sm font-mono text-zinc-500 mt-2"><i class="fa-solid fa-book-open mr-2"></i>Trích dẫn: ${qObj.citation}</p>
+                    </div>
+                `;
+
+                let isAnswered = false;
+
+                qObj.options.forEach((optText, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn text-left px-4 py-3 rounded border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-sm md:text-base";
+                    
+                    const charLabel = String.fromCharCode(65 + optIndex);
+                    btn.innerHTML = `<span class="font-bold w-6 inline-block text-zinc-500">${charLabel}.</span> ${optText}`;
+
+                    btn.addEventListener('click', () => {
+                        if (isAnswered) return;
+                        isAnswered = true;
+
+                        const allBtns = optionsGrid.querySelectorAll('button');
+                        allBtns.forEach((b, i) => {
+                            b.classList.add('disabled');
+                            b.classList.remove('hover:bg-zinc-50', 'focus:ring-2', 'focus:ring-zinc-400');
+                            
+                            if (i === qObj.correct) {
+                                // Luôn bôi xanh đáp án đúng
+                                b.classList.add('show-correct');
+                                b.innerHTML += `<i class="fa-solid fa-check-circle float-right mt-1 text-emerald-600"></i>`;
+                            } 
+                            else if (i === optIndex && i !== qObj.correct) {
+                                // Bôi đỏ nếu chọn sai
+                                b.classList.add('selected-wrong');
+                                b.innerHTML += `<i class="fa-solid fa-times-circle float-right mt-1 text-rose-600"></i>`;
+                            }
+                        });
+
+                        // Hiện khối giải thích
+                        answerDiv.classList.add('show');
+                    });
+
+                    optionsGrid.appendChild(btn);
+                });
+
+                qBlock.appendChild(optionsGrid);
+                qBlock.appendChild(answerDiv);
+                
+                // Add separator except for last question
+                if (index < quizData.length - 1) {
+                    const hr = document.createElement('hr');
+                    hr.className = "mt-10 border-zinc-100";
+                    qBlock.appendChild(hr);
+                }
+
+                container.appendChild(qBlock);
+            });
+        });
+    </script>
+</body>
+</html>
