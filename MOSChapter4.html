@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Textbook - Chương 4: Quản Lý Bộ Nhớ</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        zinc: {
+                            50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7',
+                            300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a',
+                            600: '#52525b', 700: '#3f3f46', 800: '#27272a',
+                            900: '#18181b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+
+    <style>
+        body { background-color: #fafafa; color: #18181b; }
+        
+        .content-block {
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+            color: #3f3f46;
+        }
+        
+        .content-block h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #18181b;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e4e4e7;
+        }
+
+        .content-block p { margin-bottom: 1rem; }
+        
+        .example-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .highlight-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        /* Diagram Styles */
+        .diagram-container {
+            background-color: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .memory-bar { display: flex; width: 100%; height: 60px; border: 2px solid #52525b; border-radius: 4px; overflow: hidden; }
+        .mem-os { background-color: #cbd5e1; width: 20%; display: flex; align-items: center; justify-content: center; font-weight: 600; border-right: 2px solid #52525b; }
+        .mem-process { background-color: #93c5fd; width: 30%; display: flex; align-items: center; justify-content: center; font-weight: 600; border-right: 2px solid #52525b; }
+        .mem-free { background-color: #f1f5f9; flex-grow: 1; display: flex; align-items: center; justify-content: center; font-style: italic; color: #64748b; }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col font-sans selection:bg-zinc-200">
+    <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="w-2 h-6 bg-zinc-900 inline-block rounded-sm"></span>
+                <div>
+                    <h1 class="text-xl font-semibold tracking-tight text-zinc-900 leading-none">Operating Systems (Tanenbaum Standard)</h1>
+                    <p class="text-xs text-zinc-500 mt-1">Giáo trình Lý thuyết Chuyên sâu</p>
+                </div>
+            </div>
+            <button onclick="window.print()" class="bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                <i class="fa-solid fa-print mr-2"></i> In Tài Liệu
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-10">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-72 flex-shrink-0 no-print">
+            <div class="sticky top-24">
+                <h2 class="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4">Chương 4: Quản lý Bộ nhớ</h2>
+                <nav class="flex flex-col gap-1 border-l-2 border-zinc-200 pl-4">
+                    <a href="#section-4.1" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4.1 Quản lý Bộ nhớ cơ bản</a>
+                    <a href="#section-4.2" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4.2 Swapping (Tráo đổi)</a>
+                    <a href="#section-4.3" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4.3 Bộ nhớ ảo (Virtual Memory)</a>
+                    <a href="#section-4.4" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4.4 Cách thực hiện (Implementation)</a>
+                    <a href="#section-4.5" class="text-sm font-medium text-zinc-600 hover:text-zinc-900 py-1.5 transition-colors">4.5 Phân đoạn (Segmentation)</a>
+                </nav>
+                <div class="mt-8 p-4 bg-zinc-50 border border-zinc-200 rounded-lg shadow-sm">
+                    <p class="text-xs text-zinc-600 leading-relaxed font-mono">
+                        <i class="fa-solid fa-book text-blue-600 mr-1"></i> <strong>Tài liệu chuẩn:</strong>
+                        Soạn thảo dựa trên "Modern Operating Systems" của Andrew S. Tanenbaum. Chứa sơ đồ minh họa và ví dụ chi tiết.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-grow max-w-4xl">
+            <div class="bg-white border border-zinc-200 p-8 md:p-12 rounded-xl shadow-sm">
+                
+                <div class="mb-10">
+                    <h2 class="text-3xl font-bold tracking-tight text-zinc-900">CHƯƠNG 4: QUẢN LÝ BỘ NHỚ (MEMORY MANAGEMENT)</h2>
+                    <p class="text-zinc-500 text-base mt-3 leading-relaxed">
+                        Bộ nhớ chính (RAM) là một tài nguyên trọng yếu của hệ thống. Dù dung lượng bộ nhớ tăng nhanh theo thời gian, nhưng kích thước phần mềm cũng tăng với tốc độ tương đương. Định luật Parkinson: <em>"Chương trình sẽ phình to để lấp đầy toàn bộ bộ nhớ hiện có"</em>. Nhiệm vụ của Hệ điều hành là quản lý hệ thống phân cấp bộ nhớ, bảo vệ các tiến trình và tạo ra ảo giác về một bộ nhớ vô hạn.
+                    </p>
+                </div>
+
+                <section id="section-4.1" class="content-block">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded bg-zinc-900 text-white flex items-center justify-center font-bold">1</span>
+                        <h2 class="text-2xl font-bold text-zinc-900 m-0">4.1 Quản lý Bộ nhớ cơ bản</h2>
+                    </div>
+                    
+                    <p>Trong thời kỳ sơ khai của máy tính (Mainframe cổ điển hoặc MS-DOS), Hệ điều hành không cung cấp <strong>sự trừu tượng hóa bộ nhớ (Memory Abstraction)</strong>. Các chương trình nhìn thấy trực tiếp các địa chỉ bộ nhớ vật lý. Nếu lệnh là <code>MOV REGISTER1, 1000</code>, máy tính sẽ nạp giá trị tại đúng ô nhớ vật lý số 1000. Điều này dẫn đến thảm họa khi chạy hai chương trình cùng lúc: chúng sẽ ghi đè lên bộ nhớ của nhau và làm sập hệ thống.</p>
+
+                    <h3>Không gian địa chỉ (Address Spaces)</h3>
+                    <p>Để cho phép đa chương trình (Multiprogramming), Hệ điều hành phải tạo ra <strong>Sự trừu tượng hóa</strong>: Không gian địa chỉ. Đây là một tập hợp các địa chỉ mà một tiến trình có thể sử dụng. Mỗi tiến trình có một không gian địa chỉ riêng biệt, độc lập với các tiến trình khác.</p>
+
+                    <h3>Thanh ghi Cơ sở và Thanh ghi Giới hạn (Base and Limit Registers)</h3>
+                    <p>Giải pháp cổ điển nhất để thực hiện Không gian địa chỉ độc lập là sử dụng phần cứng CPU cung cấp hai thanh ghi đặc biệt:</p>
+                    <ul class="list-disc pl-6 mb-4 space-y-2">
+                        <li><strong>Base Register (Thanh ghi cơ sở):</strong> Lưu trữ địa chỉ vật lý bắt đầu của tiến trình trong RAM.</li>
+                        <li><strong>Limit Register (Thanh ghi giới hạn):</strong> Lưu trữ kích thước của tiến trình.</li>
+                    </ul>
+
+                    <div class="example-box">
+                        <strong><i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i> Ví dụ minh họa:</strong>
+                        <p class="mt-2">Giả sử Tiến trình A được nạp vào RAM tại vị trí <code>16384</code> và có kích thước <code>32768</code> bytes.</p>
+                        <ul class="mt-2 text-sm font-mono">
+                            <li>Base Register = 16384</li>
+                            <li>Limit Register = 32768</li>
+                        </ul>
+                        <p class="mt-2">Khi Tiến trình A yêu cầu truy cập địa chỉ ảo (Logical Address) <code>100</code>, CPU sẽ tự động cộng: <strong>Địa chỉ vật lý = 100 + 16384 = 16484</strong>. Trước khi truy xuất, phần cứng kiểm tra xem <code>100 < 32768</code> hay không. Vì thỏa mãn, truy cập hợp lệ. Quá trình này gọi là <strong>Tái định vị động (Dynamic Relocation)</strong>.</p>
+                    </div>
+
+                    <div class="diagram-container">
+                        <p class="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Sơ đồ Cơ chế Base & Limit</p>
+                        <div class="flex justify-center items-center">
+                            <div class="border-2 border-blue-400 bg-blue-50 p-4 rounded text-sm w-40 text-center font-mono">
+                                CPU phát ra<br>Địa chỉ Ảo (100)
+                            </div>
+                            <div class="text-2xl mx-4 text-zinc-400"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="border-2 border-emerald-400 bg-emerald-50 p-4 rounded text-sm w-48 text-center relative">
+                                <div class="font-bold border-b border-emerald-200 pb-2 mb-2">Bộ cộng (Adder)</div>
+                                <div class="font-mono">100 + BASE(16384)</div>
+                                <div class="absolute -bottom-8 left-0 right-0 text-xs text-rose-500 font-bold">Kiểm tra < LIMIT ?</div>
+                            </div>
+                            <div class="text-2xl mx-4 text-zinc-400"><i class="fa-solid fa-arrow-right"></i></div>
+                            <div class="border-2 border-purple-400 bg-purple-50 p-4 rounded text-sm w-40 text-center font-mono">
+                                RAM Vật lý<br>Địa chỉ (16484)
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-4.2" class="content-block mt-16">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded bg-zinc-900 text-white flex items-center justify-center font-bold">2</span>
+                        <h2 class="text-2xl font-bold text-zinc-900 m-0">4.2 Swapping (Tráo đổi)</h2>
+                    </div>
+
+                    <p>Khi có quá nhiều tiến trình muốn chạy mà tổng dung lượng của chúng vượt quá bộ nhớ vật lý, Hệ điều hành sử dụng kỹ thuật <strong>Swapping</strong>. Kỹ thuật này đẩy toàn bộ một tiến trình tạm thời không chạy ra ổ đĩa cứng (Backing store), sau đó nạp lại nó vào RAM khi đến lượt chạy.</p>
+
+                    <h3>Hiện tượng Phân mảnh (Fragmentation)</h3>
+                    <p>Khi các tiến trình liên tục Swap In và Swap Out khỏi RAM, bộ nhớ sẽ xuất hiện các "Lỗ hổng" (Holes). Điều này gây ra <strong>Phân mảnh ngoại (External Fragmentation)</strong>: Tổng dung lượng bộ nhớ trống đủ lớn, nhưng bị chia nhỏ thành nhiều mảnh rời rạc khiến không thể cấp phát cho tiến trình mới.</p>
+                    <p>Hệ điều hành có thể xử lý bằng cách <strong>Gom mảnh (Memory Compaction)</strong>: Dồn tất cả các tiến trình về một đầu RAM để tạo ra một khoảng trống lớn duy nhất ở đầu kia. Tuy nhiên, thao tác này cực kỳ tốn thời gian CPU (thường mất hàng mili-giây).</p>
+
+                    <div class="diagram-container">
+                        <p class="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Mô phỏng Swapping gây ra Phân mảnh ngoại</p>
+                        <div class="memory-bar mb-2">
+                            <div class="mem-os text-xs">OS</div>
+                            <div class="mem-process text-xs">Process A</div>
+                            <div class="mem-process bg-rose-200 text-xs w-[15%]">Process B</div>
+                            <div class="mem-process bg-emerald-200 text-xs w-[25%]">Process C</div>
+                            <div class="mem-free text-xs w-[10%]">Free</div>
+                        </div>
+                        <p class="text-xs text-left mb-2 text-zinc-500">1. Trạng thái ban đầu: RAM gần đầy.</p>
+                        
+                        <div class="memory-bar mb-2">
+                            <div class="mem-os text-xs">OS</div>
+                            <div class="mem-process text-xs">Process A</div>
+                            <div class="mem-free bg-rose-50 text-xs w-[15%]">Hole 1</div>
+                            <div class="mem-process bg-emerald-200 text-xs w-[25%]">Process C</div>
+                            <div class="mem-free text-xs w-[10%]">Hole 2</div>
+                        </div>
+                        <p class="text-xs text-left text-zinc-500">2. Process B kết thúc (hoặc bị Swap out). Xảy ra phân mảnh ngoại: Hai Hole rải rác. Dù tổng Hole đủ lớn, nhưng không thể chứa Process D cần khoảng trống liền mạch bằng tổng 2 Hole này.</p>
+                    </div>
+
+                    <h3>Quản lý Vùng nhớ Trống (Free Memory Management)</h3>
+                    <p>Hệ điều hành theo dõi vùng nhớ nào đang bận, vùng nào rảnh bằng hai phương pháp:</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>Bitmaps:</strong> Băm RAM thành các đơn vị phân bổ nhỏ. Sử dụng một chuỗi Bit, mỗi Bit đại diện cho 1 đơn vị (0 = Trống, 1 = Bận). Kích thước Bitmap tỷ lệ thuận với bộ nhớ, việc tìm chuỗi '0' liên tiếp khá tốn thời gian.</li>
+                        <li><strong>Linked Lists (Danh sách liên kết):</strong> Duy trì một danh sách các Segment (Đoạn). Mỗi Node (nút) lưu trạng thái: <code>[ P/H | Khởi đầu | Độ dài | Con trỏ Next ]</code> (P = Process, H = Hole).</li>
+                    </ul>
+
+                    <h3>Các thuật toán cấp phát vùng nhớ (Allocation Algorithms)</h3>
+                    <p>Khi dùng Linked Lists, HĐH có các chiến lược chọn vùng trống (Hole) cho tiến trình mới:</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li><strong>First-fit (Phù hợp đầu tiên):</strong> Quét danh sách từ đầu, lấy Hole đầu tiên đủ lớn. Nhanh nhất.</li>
+                        <li><strong>Next-fit (Phù hợp tiếp theo):</strong> Giống First-fit nhưng bắt đầu quét từ vị trí dừng lại ở lần cấp phát trước.</li>
+                        <li><strong>Best-fit (Phù hợp nhất):</strong> Quét toàn bộ danh sách, chọn Hole nhỏ nhất vừa đủ yêu cầu. Mục đích tiết kiệm vùng lớn, nhưng lại tạo ra các mảnh vụn cực nhỏ (vô dụng).</li>
+                        <li><strong>Worst-fit (Phù hợp tệ nhất):</strong> Quét toàn bộ danh sách, chọn Hole lớn nhất. Mục đích là phần thừa còn lại sẽ đủ lớn để dùng cho tiến trình khác.</li>
+                    </ul>
+                </section>
+
+                <section id="section-4.3" class="content-block mt-16">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded bg-zinc-900 text-white flex items-center justify-center font-bold">3</span>
+                        <h2 class="text-2xl font-bold text-zinc-900 m-0">4.3 Bộ nhớ ảo (Virtual Memory)</h2>
+                    </div>
+
+                    <p>Vấn đề lớn nhất của Swapping là nếu chương trình quá lớn, lớn hơn cả dung lượng vật lý của RAM (Ví dụ Game 10GB chạy trên RAM 4GB), Swapping thất bại hoàn toàn. <strong>Bộ nhớ ảo (Virtual Memory)</strong> ra đời để giải quyết vấn đề này.</p>
+                    <p>Ý tưởng cốt lõi: Mỗi chương trình có một không gian địa chỉ ảo cực lớn. Không gian này được chia thành các phần nhỏ, được nạp vào bộ nhớ vật lý TỪNG PHẦN MỘT. Các phần chưa cần dùng vẫn nằm trên đĩa cứng.</p>
+
+                    <h3>Phân trang (Paging)</h3>
+                    <p>Cơ chế phổ biến nhất để thực hiện Bộ nhớ ảo là Phân trang.</p>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>Không gian địa chỉ Ảo được chia thành các khối có kích thước cố định bằng nhau gọi là <strong>Pages (Trang)</strong>.</li>
+                        <li>Bộ nhớ Vật lý được chia thành các khối có kích thước bằng hệt như vậy gọi là <strong>Page Frames (Khung trang)</strong>.</li>
+                        <li>Kích thước trang điển hình là 4KB hoặc 8KB.</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        <p class="font-bold text-amber-800 mb-1">Cơ chế dịch địa chỉ (Address Translation)</p>
+                        <p class="text-amber-900 text-sm">Khi CPU tham chiếu một lệnh, nó phát ra một địa chỉ ảo. Con chip <strong>MMU (Memory Management Unit)</strong> sẽ cắt địa chỉ này thành 2 phần: <code>[ Page Number (p) | Offset (d) ]</code>. MMU tra Bảng Trang để đổi <code>Page Number</code> thành <code>Frame Number (f)</code>. Ghép với Offset cũ, ta có địa chỉ vật lý.</p>
+                    </div>
+
+                    <div class="diagram-container">
+                        <p class="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-4">Sơ đồ dịch địa chỉ Phân trang (Paging)</p>
+                        <div class="flex flex-col items-center">
+                            <!-- Virtual Address -->
+                            <div class="flex mb-4">
+                                <div class="border-2 border-indigo-400 bg-indigo-50 px-4 py-2 text-sm font-mono w-32 text-center rounded-l">Số trang ảo (p)</div>
+                                <div class="border-y-2 border-r-2 border-zinc-400 bg-zinc-50 px-4 py-2 text-sm font-mono w-32 text-center rounded-r">Offset (d)</div>
+                            </div>
+                            <div class="text-xl text-zinc-400 my-1"><i class="fa-solid fa-arrow-down"></i> Tra cứu Bảng Trang (Page Table)</div>
+                            <!-- Translation -->
+                            <div class="border-2 border-amber-400 bg-amber-50 p-3 rounded text-sm text-center mb-4 w-64">
+                                Page Table Entry (PTE)<br>
+                                <span class="font-mono font-bold text-amber-700">p -> f (Khung vật lý)</span>
+                            </div>
+                            <div class="text-xl text-zinc-400 my-1"><i class="fa-solid fa-arrow-down"></i></div>
+                            <!-- Physical Address -->
+                            <div class="flex">
+                                <div class="border-2 border-emerald-400 bg-emerald-50 px-4 py-2 text-sm font-mono w-32 text-center rounded-l">Khung vật lý (f)</div>
+                                <div class="border-y-2 border-r-2 border-zinc-400 bg-zinc-50 px-4 py-2 text-sm font-mono w-32 text-center rounded-r">Offset (d)</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-4.4" class="content-block mt-16">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded bg-zinc-900 text-white flex items-center justify-center font-bold">4</span>
+                        <h2 class="text-2xl font-bold text-zinc-900 m-0">4.4 Cách thực hiện (Implementation Details)</h2>
+                    </div>
+
+                    <p>Việc ánh xạ ảo sang vật lý phải được thực hiện một cách chớp nhoáng (vài nano giây) cho mọi lệnh của CPU. Và không gian địa chỉ quá lớn dẫn đến Bảng trang (Page Table) cũng vô cùng khổng lồ.</p>
+
+                    <h3>Cấu trúc của Bảng trang (Page Table Entry - PTE)</h3>
+                    <p>Bảng trang là một mảng. Mỗi phần tử (Entry) ánh xạ một Trang ảo sang một Khung vật lý. Một PTE chứa các bit quan trọng sau:</p>
+                    <ul class="list-disc pl-6 space-y-2 mb-4">
+                        <li><strong>Frame Number:</strong> Lưu số hiệu khung vật lý (Nơi ở thực sự trên RAM).</li>
+                        <li><strong>Present/Absent bit:</strong> Bit sống còn. Bằng 1 nghĩa là trang đang nằm trong RAM. Bằng 0 nghĩa là trang đang nằm trên ổ đĩa. Truy cập vào bit 0 sẽ sinh ra Lỗi trang (Page Fault).</li>
+                        <li><strong>Protection bits:</strong> 3 bit (Read/Write/Execute) xác định quyền truy cập trang.</li>
+                        <li><strong>Modified/Dirty bit:</strong> Đánh dấu bằng 1 nếu nội dung trang đã bị sửa đổi. Rất quan trọng khi quyết định có cần ghi ngược trang này xuống đĩa cứng khi thay thế hay không.</li>
+                        <li><strong>Referenced bit:</strong> Đánh dấu bằng 1 mỗi khi trang được đọc/ghi. Dùng cho thuật toán thay thế trang.</li>
+                    </ul>
+
+                    <h3>Tăng tốc dịch địa chỉ với TLB (Translation Lookaside Buffer)</h3>
+                    <p>Vì Bảng trang nằm trong RAM, mỗi lệnh máy tính cần lấy dữ liệu sẽ phải truy cập bộ nhớ ít nhất 2 lần (1 lần đọc bảng trang, 1 lần đọc dữ liệu). Rất chậm!</p>
+                    <p>Giải pháp: Trang bị phần cứng bên trong MMU một bộ đệm siêu tốc gọi là <strong>TLB (Translation Lookaside Buffer)</strong>. TLB lưu trữ một số lượng nhỏ (thường 64-256) các mục Page Table được dùng gần đây nhất.</p>
+                    <div class="example-box">
+                        <ul class="list-none space-y-2">
+                            <li><i class="fa-solid fa-bolt text-yellow-500 w-5"></i> <strong>TLB Hit:</strong> CPU cần dịch trang, tìm thấy trong TLB. Dịch địa chỉ ngay lập tức, không tốn chu kỳ truy cập RAM.</li>
+                            <li><i class="fa-solid fa-clock text-rose-500 w-5"></i> <strong>TLB Miss:</strong> Không thấy trong TLB. MMU phải lóc cóc chạy ra RAM tra Bảng trang, nạp kết quả vào TLB rồi mới truy xuất dữ liệu.</li>
+                        </ul>
+                    </div>
+
+                    <h3>Bảng trang đa cấp (Multilevel Page Tables)</h3>
+                    <p>Với hệ thống 32-bit và kích thước trang 4KB, ta có $2^{20}$ (hơn 1 triệu) trang ảo. Mỗi PTE tốn 4 Bytes, suy ra Bảng trang tốn 4MB. Mỗi tiến trình một Bảng 4MB là rất lãng phí. HĐH dùng <strong>Bảng trang 2 cấp</strong>: Cấp 1 trỏ tới Bảng cấp 2. Nếu một vùng ảo (như khoảng trống giữa Data và Stack) không được dùng, HĐH không thèm cấp phát Bảng cấp 2 cho nó, tiết kiệm lượng lớn RAM.</p>
+
+                    <h3>Xử lý Lỗi trang (Page Fault Handling)</h3>
+                    <p>Đây là kịch bản xảy ra khi CPU chạm vào một trang có <code>Present = 0</code>:</p>
+                    <ol class="list-decimal pl-6 space-y-2 font-medium text-zinc-700">
+                        <li>MMU phát ra bẫy (Trap) về Hệ điều hành.</li>
+                        <li>HĐH lưu trạng thái tiến trình hiện tại. Xác định địa chỉ gây lỗi.</li>
+                        <li>Kiểm tra xem địa chỉ ảo này có hợp lệ không. Nếu hợp lệ, HĐH tìm một Khung trang trống (Free Frame) trên RAM.</li>
+                        <li>Nếu không còn khung trống, gọi <strong>Thuật toán thay thế trang (Page Replacement Algorithm)</strong> để chọn "Nạn nhân" đẩy ra đĩa cứng.</li>
+                        <li>Ra lệnh đĩa cứng nạp nội dung trang cần thiết vào khung trống vừa tìm được.</li>
+                        <li>Cập nhật Bảng trang (Set Present = 1, cập nhật Frame Number).</li>
+                        <li>Khởi động lại câu lệnh CPU vừa bị ngắt.</li>
+                    </ol>
+                </section>
+
+                <section id="section-4.5" class="content-block mt-16">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 rounded bg-zinc-900 text-white flex items-center justify-center font-bold">5</span>
+                        <h2 class="text-2xl font-bold text-zinc-900 m-0">4.5 Phân đoạn (Segmentation)</h2>
+                    </div>
+
+                    <p>Phân trang (Paging) tạo ra một không gian địa chỉ 1 chiều tuyến tính duy nhất. Lập trình viên không biết sự tồn tại của các trang. Việc chia cắt do HĐH và phần cứng làm mù quáng bằng cách "chặt" địa chỉ theo kích thước cố định.</p>
+                    
+                    <p><strong>Phân đoạn (Segmentation)</strong> cung cấp một góc nhìn không gian địa chỉ 2 chiều. Bộ nhớ được chia thành các Đoạn (Segments) hoàn toàn độc lập về mặt logic như: Đoạn Code (Mã lệnh), Đoạn Data (Dữ liệu), Đoạn Stack (Ngăn xếp).</p>
+
+                    <div class="highlight-box mt-4">
+                        <p class="font-bold text-amber-800 mb-2">Ưu điểm của Phân đoạn so với Phân trang:</p>
+                        <ul class="list-disc pl-6 text-sm text-amber-900 space-y-1">
+                            <li>Mỗi đoạn có thể phình to hoặc thu nhỏ độc lập (Ví dụ Stack tự động dài ra) mà không va chạm vào đoạn khác.</li>
+                            <li>Dễ dàng chia sẻ: Hai tiến trình có thể dùng chung 1 Đoạn Code, nhưng có Đoạn Data riêng rẽ.</li>
+                            <li>Bảo vệ chặt chẽ hơn: Vì HĐH biết rõ bản chất logic của Đoạn, nó có thể cấm Quyền Ghi (Write) vào Đoạn Code một cách dễ dàng.</li>
+                        </ul>
+                    </div>
+
+                    <h3>Sự khác biệt Cốt lõi (Paging vs Segmentation)</h3>
+                    <div class="overflow-x-auto mt-4 mb-6">
+                        <table class="min-w-full bg-white border border-zinc-200">
+                            <thead>
+                                <tr class="bg-zinc-100">
+                                    <th class="py-2 px-4 border-b border-zinc-200 text-left font-semibold">Đặc điểm</th>
+                                    <th class="py-2 px-4 border-b border-zinc-200 text-left font-semibold text-emerald-700">Phân trang (Paging)</th>
+                                    <th class="py-2 px-4 border-b border-zinc-200 text-left font-semibold text-blue-700">Phân đoạn (Segmentation)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                <tr>
+                                    <td class="py-2 px-4 border-b border-zinc-200 font-medium">Bản chất</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">Chia theo phần cứng, mù quáng.</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">Chia theo logic người dùng.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b border-zinc-200 font-medium">Kích thước khối</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">Tuyệt đối cố định (vd: 4KB).</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">Biến thiên theo nội dung.</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b border-zinc-200 font-medium">Không gian</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">1 chiều (Tuyến tính).</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200">2 chiều (Số đoạn, Offset).</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b border-zinc-200 font-medium">Hiện tượng phân mảnh</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200 text-rose-600">Phân mảnh NỘI (Khối cố định dư thừa).</td>
+                                    <td class="py-2 px-4 border-b border-zinc-200 text-rose-600">Phân mảnh NGOẠI (Khối biến thiên bị rải rác).</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Sự kết hợp hoàn hảo (Segmentation with Paging)</h3>
+                    <p>Trong thực tế, các kiến trúc máy tính hiện đại như MULTICS hay đặc biệt là <strong>Intel x86/Pentium</strong> sử dụng kết hợp cả hai. Phân đoạn giải quyết vấn đề quản lý logic và bảo vệ phần mềm, sau đó kết quả lại được đưa qua Phân trang để cắt nhỏ thành kích thước cố định nhét vào RAM, loại bỏ vấn đề Phân mảnh ngoại của đĩa cứng.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+</html>
